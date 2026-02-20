@@ -413,17 +413,44 @@
 
             <!-- SLIDES TAB -->
             <section id="tab-slides" class="page-trans hidden max-w-6xl mx-auto h-full flex flex-col">
-                <div class="flex items-center justify-between mb-8">
+                <div class="flex items-start justify-between mb-8 gap-4 flex-wrap">
                     <div>
                         <h3 class="font-bold text-slate-900 text-lg">Slide Gallery</h3>
-                        <p class="text-sm text-slate-500">Manage promotional images</p>
+                        <p class="text-sm text-slate-500">Manage promotional images & QR codes</p>
                     </div>
-                    <label
-                        class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center gap-2 hover:-translate-y-0.5 transform">
-                        <i class="fa-solid fa-upload"></i> Upload Media
-                        <input type="file" id="imageInput" accept="image/*,video/mp4,video/webm,application/pdf"
-                            class="hidden" multiple onchange="handleImageUpload(this)">
-                    </label>
+
+                    <div class="flex items-center gap-3">
+                        <!-- Add QR Slide Button -->
+                        <div class="relative group">
+                            <button onclick="document.getElementById('qr-form').classList.toggle('hidden')"
+                                class="bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-500/20 flex items-center gap-2">
+                                <i class="fa-solid fa-qrcode"></i> Add QR
+                            </button>
+                            <!-- Dropdown Form -->
+                            <div id="qr-form"
+                                class="hidden absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 shadow-xl rounded-xl p-4 z-50">
+                                <h4 class="font-bold text-slate-900 mb-3 text-sm">Create QR Slide</h4>
+                                <div class="space-y-3">
+                                    <input type="text" id="qrTitle" placeholder="Title (e.g. Donate)"
+                                        class="w-full text-sm border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <input type="text" id="qrUrl" placeholder="https://..."
+                                        class="w-full text-sm border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <input type="text" id="qrDesc" placeholder="Description (Optional)"
+                                        class="w-full text-sm border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <button onclick="addQrSlide()"
+                                        class="w-full bg-slate-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-slate-800">Add
+                                        Slide</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label
+                            class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center gap-2 hover:-translate-y-0.5 transform">
+                            <i class="fa-solid fa-upload"></i> Upload Media
+                            <input type="file" id="imageInput" accept="image/*,video/mp4,video/webm,application/pdf"
+                                class="hidden" multiple onchange="handleImageUpload(this)">
+                        </label>
+                    </div>
                 </div>
                 <div id="slideList" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 pb-20"></div>
             </section>
@@ -1095,6 +1122,17 @@
                              <span class="text-xs px-2 text-center truncate w-full font-medium text-slate-600 mt-1">${item.name || 'Untitled'}</span>
                         </div>
                     `;
+                } else if (type === 'qr') {
+                    // QR Preview
+                    const qrPrev = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.url)}&color=000000`;
+                    contentHTML = `
+                        <div class="w-full h-full flex flex-col items-center justify-center bg-white text-slate-800 p-4 border border-slate-100">
+                             <img src="${qrPrev}" class="w-20 h-20 mb-2 opacity-80">
+                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">QR Slide</span>
+                             <span class="text-xs px-2 text-center truncate w-full font-bold text-slate-700 mt-1">${item.title}</span>
+                             <span class="text-[9px] px-2 text-center truncate w-full text-slate-400">${item.url}</span>
+                        </div>
+                   `;
                 }
 
                 el.innerHTML = `
@@ -1105,6 +1143,39 @@
                 `;
                 list.appendChild(el);
             });
+        }
+
+        // ============================================================
+        // QR SLIDE FUNCTIONS
+        // ============================================================
+        function addQrSlide() {
+            const title = document.getElementById('qrTitle').value.trim();
+            const url = document.getElementById('qrUrl').value.trim();
+            const desc = document.getElementById('qrDesc').value.trim();
+
+            if (!title || !url) {
+                alert("Title and URL are required!");
+                return;
+            }
+
+            const slide = {
+                type: 'qr',
+                title: title,
+                url: url,
+                desc: desc
+            };
+
+            config.slides.push(slide);
+            renderSlides();
+            saveConfig(false);
+
+            // Reset and hide
+            document.getElementById('qrTitle').value = "";
+            document.getElementById('qrUrl').value = "";
+            document.getElementById('qrDesc').value = "";
+            document.getElementById('qr-form').classList.add('hidden');
+
+            alert('QR Slide Added!');
         }
 
         // ============================================================

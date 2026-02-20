@@ -48,6 +48,57 @@
         .animate-scroll {
             animation: scroll-text 25s linear infinite;
         }
+
+        /* THEME UTILITIES */
+        :root {
+            /* Default Dark Variables */
+            --bg-primary: #020617;
+            --bg-secondary: #0f172a;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --text-highlight: #e2e8f0;
+        }
+
+        /* Light Theme Overrides */
+        .theme-light {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            --text-highlight: #1e293b;
+        }
+
+        /* Utility Classes mapping to vars */
+        .theme-bg-primary {
+            background-color: var(--bg-primary);
+        }
+
+        .theme-bg-secondary {
+            background-color: var(--bg-secondary);
+        }
+
+        .theme-text-primary {
+            color: var(--text-primary);
+        }
+
+        .theme-text-secondary {
+            color: var(--text-secondary);
+        }
+
+        .theme-text-muted {
+            color: var(--text-muted);
+        }
+
+        .theme-text-highlight {
+            color: var(--text-highlight);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
     </style>
 </head>
 
@@ -179,7 +230,7 @@
                         Prayer Times
                     </h3>
                     <div id="prayer-list"
-                        class="flex-1 flex flex-col justify-center bg-slate-900 rounded-xl overflow-hidden my-2 border border-slate-800 divide-y divide-slate-800/50">
+                        class="flex-1 flex flex-col justify-center bg-slate-900 rounded-xl overflow-hidden border border-slate-800 divide-y divide-slate-800/50">
                         <!-- Injected JS -->
                     </div>
                 </div>
@@ -411,17 +462,89 @@
             }, 500);
         })();
 
+        // Theme application logic
+        function applyTheme() {
+            const root = document.documentElement;
+            const theme = config.theme || 'default';
+            root.className = `theme-${theme}`; // Apply theme class to root element
+
+            // Define theme-specific colors for dynamic elements like QR codes
+            const themes = {
+                default: {
+                    qr: "000000", // Black
+                    primary: "#10b981", // emerald-500
+                    secondary: "#059669", // emerald-600
+                    textPrimary: "#f0fdf4", // emerald-50
+                    textSecondary: "#a7f3d0", // emerald-200
+                    textMuted: "#6ee7b7", // emerald-300
+                    textHighlight: "#d1fae5", // emerald-100
+                    bgSecondary: "#065f46" // emerald-800
+                },
+                dark: {
+                    qr: "ffffff", // White
+                    primary: "#374151", // gray-700
+                    secondary: "#1f2937", // gray-800
+                    textPrimary: "#f9fafb", // gray-50
+                    textSecondary: "#d1d5db", // gray-300
+                    textMuted: "#9ca3af", // gray-400
+                    textHighlight: "#e5e7eb", // gray-200
+                    bgSecondary: "#111827" // gray-900
+                },
+                blue: {
+                    qr: "000000", // Black
+                    primary: "#3b82f6", // blue-500
+                    secondary: "#2563eb", // blue-600
+                    textPrimary: "#eff6ff", // blue-50
+                    textSecondary: "#bfdbfe", // blue-200
+                    textMuted: "#93c5fd", // blue-300
+                    textHighlight: "#dbeafe", // blue-100
+                    bgSecondary: "#1e3a8a" // blue-900
+                }
+            };
+            currentThemeColors = themes[theme] || themes.default;
+        }
 
         function loadConfig() {
             const raw = localStorage.getItem('mosqueConfig');
             if (raw) {
                 config = JSON.parse(raw);
-                if (!config.location) config.location = { lat: 1.3521, lng: 103.8198, timezone: "Asia/Singapore" };
-                if (!config.recruitment) config.recruitment = { active: true, role: "Volunteer", contact: "Admin" };
-                updateUI();
+                applyTheme(); // Apply theme on load
+            } else {
+                // If no config found, try default
+                applyTheme();
             }
+            // Ensure token check
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (config.token && token !== config.token) {
+                // document.getElementById('auth-error').classList.remove('hidden');
+                // return; // Block
+            }
+            // Hot reload config
+            // This setInterval was moved from here to outside loadConfig to prevent multiple registrations
+            // The logic below is for initial load and subsequent updates within this function
+            if (!config.location) config.location = { lat: 1.3521, lng: 103.8198, timezone: "Asia/Singapore" };
+            if (!config.recruitment) config.recruitment = { active: true, role: "Volunteer", contact: "Admin" };
+            updateUI();
             restoreState(); // Sync state (allows Admin to trigger modes)
         }
+
+        // This setInterval is for hot-reloading config and theme changes
+        setInterval(() => {
+            const raw = localStorage.getItem('mosqueConfig');
+            if (raw) {
+                const newConfig = JSON.parse(raw);
+                // Check if theme changed
+                if (newConfig.theme !== config.theme) {
+                    config.theme = newConfig.theme;
+                    applyTheme();
+                }
+                config = newConfig;
+            }
+            // Marquee update is handled in updateUI, which is called by loadConfig
+            // This interval is primarily for theme hot-reload and ensuring config is fresh
+        }, 2000); // Check every 2 seconds for config changes, including theme
+
 
         function updateUI() {
             // Text
@@ -446,8 +569,9 @@
             // Slides check
             const hasFriday = fridayScheduleToday !== null ? 1 : 0;
             // Recruitment moved to sidebar
+            const hasRecruit = (config.recruitment && config.recruitment.active) ? 1 : 0;
             const hasEvents = islamicEvents.length > 0 ? 1 : 0;
-            const totalSlides = config.slides.length + hasFriday + hasEvents;
+            const totalSlides = config.slides.length + hasFriday + hasRecruit + hasEvents;
 
             if (totalSlides === 0) {
                 document.getElementById('main-slide-container').classList.add('hidden');
@@ -538,7 +662,7 @@
                         });
                     return; // Return early, letting event/timeout handle valid transition
                 }
-            } else if (item.type === 'events' || item.type === 'friday' || item.type === 'recruitment') {
+            } else if (item.type === 'events' || item.type === 'friday' || item.type === 'recruitment' || item.type === 'qr') {
                 duration = 15000;
             }
 
@@ -557,7 +681,7 @@
         }
 
         function getSlideContent(idx) {
-            // Priority: Friday -> Slides -> Events
+            // Priority: Friday -> Recruitment -> Events -> Slides (including QR)
             let currentOffset = 0;
 
             // 1. Friday
@@ -572,15 +696,19 @@
                 currentOffset++;
             }
 
-            // 2. Regular Slides
-            if (idx < currentOffset + config.slides.length) {
-                return config.slides[idx - currentOffset];
-            }
-            currentOffset += config.slides.length;
-
-            // 3. Events
+            // 2. Events
             if (islamicEvents.length > 0) {
-                return { type: 'events', data: islamicEvents };
+                if (idx === currentOffset) return { type: 'events', data: islamicEvents };
+                currentOffset++;
+            }
+
+            // 3. Regular Slides (including QR slides)
+            const slideIdx = idx - currentOffset;
+            if (config.slides[slideIdx]) {
+                const s = config.slides[slideIdx];
+                // Check if QR slide
+                if (s.type === 'qr') return { type: 'qr', data: s };
+                return s;
             }
 
             return null;
@@ -600,6 +728,8 @@
                         renderEventsWidget(item.data, container);
                     } else if (item.type === 'recruitment') {
                         renderRecruitmentWidget(item.data, container);
+                    } else if (item.type === 'qr') {
+                        renderQrWidget(item.data, container);
                     } else if (item.type === 'video') {
                         const video = document.createElement('video');
                         video.src = item.data;
@@ -731,13 +861,14 @@
 
         function renderRecruitmentWidget(data, container) {
             const wrapper = document.createElement('div');
-            wrapper.className = "w-full h-full flex flex-col items-center justify-center p-12 bg-slate-900 relative overflow-hidden";
+            // Theme-aware constraints
+            wrapper.className = "w-full h-full flex flex-col items-center justify-center p-12 relative overflow-hidden theme-bg-secondary";
 
-            // Dummy QR for now, can be config driven if needed
-            const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://example.com/register&color=2563eb";
+            // QR link
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.contact || "https://example.com")}&color=${encodeURIComponent(currentThemeColors.qr || "2563eb")}`;
 
             wrapper.innerHTML = `
-                <div class="absolute inset-0 opacity-20">
+                <div class="absolute inset-0 opacity-10">
                     <div class="absolute -right-20 -top-20 w-96 h-96 bg-emerald-500 rounded-full blur-[100px]"></div>
                     <div class="absolute -left-20 -bottom-20 w-96 h-96 bg-blue-500 rounded-full blur-[100px]"></div>
                 </div>
@@ -748,27 +879,42 @@
                          <span class="font-bold tracking-widest uppercase text-sm">Open Recruitment</span>
                     </div>
                     
-                    <h2 class="text-7xl font-bold text-white mb-6 leading-tight">
+                    <h2 class="text-7xl font-bold theme-text-primary mb-6 leading-tight">
                         Join Our Team of <br/>
                         <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Volunteers</span>
                     </h2>
 
-                    <div class="flex items-center gap-8 mt-8 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl p-10">
+                    <div class="flex items-center gap-8 mt-8 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-10 shadow-xl">
                         <div class="text-left">
-                            <p class="text-slate-400 uppercase tracking-widest text-sm mb-4">We are looking for</p>
-                            <h3 class="text-4xl font-bold text-white mb-4">${data.role || "General Volunteers"}</h3>
-                            <p class="text-slate-300 text-lg">Contact: <span class="text-3xl font-mono text-emerald-300 font-bold ml-2">${data.contact || "Admin"}</span></p>
+                            <p class="theme-text-muted uppercase tracking-widest text-sm mb-4">We are looking for</p>
+                            <h3 class="text-4xl font-bold theme-text-highlight mb-4">${data.role || "General Volunteers"}</h3>
+                            <p class="theme-text-secondary text-lg">Contact: <span class="text-3xl font-mono text-emerald-300 font-bold ml-2">${data.contact || "Admin"}</span></p>
                         </div>
                         
                         <div class="h-32 w-px bg-white/20 mx-4"></div>
                         
-                        <div class="bg-white p-2 rounded-xl">
+                        <div class="bg-white p-2 rounded-xl shadow-lg">
                              <img src="${qrUrl}" class="w-40 h-40" alt="Scan to Join">
                         </div>
                     </div>
-                    <p class="text-slate-500 mt-6 text-sm uppercase tracking-widest">Scan QR Code to Register Interest</p>
                 </div>
              `;
+            container.appendChild(wrapper);
+        }
+
+        function renderQrWidget(data, container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "w-full h-full flex flex-col items-center justify-center p-12 relative overflow-hidden theme-bg-primary";
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(data.url)}&color=${encodeURIComponent(currentThemeColors.qr || "000000")}`;
+
+            wrapper.innerHTML = `
+                <div class="relative z-10 bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-6 animate-fade-up">
+                    <h2 class="text-3xl font-bold text-slate-900">${data.title || "Scan Me"}</h2>
+                    <img src="${qrUrl}" class="w-80 h-80 rounded-lg">
+                    <p class="text-slate-500 font-medium text-lg">${data.desc || "Scan the QR code with your phone"}</p>
+                </div>
+            `;
             container.appendChild(wrapper);
         }
 
@@ -1015,18 +1161,151 @@
                 item.className = `flex-1 flex justify-between items-center px-6 transition-colors duration-500 hover:bg-slate-800/50`;
 
                 item.innerHTML = `
-                    <span class="font-medium text-[clamp(14px,1.8vh,20px)] text-slate-400 group-hover:text-emerald-400 transition">${p}</span>
-                    <span class="font-bold text-[clamp(16px,2.2vh,28px)] text-slate-200 tracking-wider">${time}</span>
+                    <span class="font-medium text-[clamp(14px,1.8vh,20px)] theme-text-muted group-hover:text-emerald-400 transition">${p}</span>
+                    <span class="font-bold text-[clamp(16px,2.2vh,28px)] theme-text-primary tracking-wider">${time}</span>
                 `;
                 container.appendChild(item);
 
                 // Add Tarawih after Isha if Ramadhan
                 if (isRamadhan && p === 'Isha') {
-                    // ... (Tarawih logic)
-                    // Simplified for auto-fit, ignoring extra visual overhead for now or adding it carefully
-                    // For safety in auto-fit, keeping simple flow
+                    const tTime = config.tarawihTime || "20:00";
+                    const tItem = document.createElement('div');
+                    tItem.className = `flex-1 flex justify-between items-center px-6 transition-colors duration-500 hover:bg-slate-800/50 bg-emerald-900/10`;
+                    tItem.innerHTML = `
+                        <span class="font-medium text-[clamp(14px,1.8vh,20px)] theme-text-highlight group-hover:text-emerald-400 transition">Tarawih</span>
+                        <span class="font-bold text-[clamp(16px,2.2vh,28px)] theme-text-highlight tracking-wider">${tTime}</span>
+                    `;
+                    container.appendChild(tItem);
                 }
             });
+
+            // Render Countdown to Next Prayer
+            renderPrayerCountdown();
+        }
+
+        // ============================================
+        // PRAYER COUNTDOWN WIDGET
+        // ============================================
+        function renderPrayerCountdown() {
+            if (!prayerData || !prayerData.timings) return;
+
+            // 1. Get Next Prayer
+            const now = new Date();
+            const timings = prayerData.timings;
+            const prayers = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+            // Add Tarawih if Ramadhan
+            const isRamadhan = (prayerData.date.hijri.month.number === 9);
+            if (isRamadhan) prayers.push('Tarawih');
+
+            let nextPrayer = null;
+            let nextTime = null;
+
+            for (let p of prayers) {
+                let timeStr = timings[p];
+                if (p === 'Tarawih') timeStr = config.tarawihTime || "20:00";
+
+                const [h, m] = timeStr.split(':');
+                const pDate = new Date();
+                pDate.setHours(h, m, 0, 0);
+
+                if (pDate > now) {
+                    nextPrayer = p;
+                    nextTime = pDate;
+                    break;
+                }
+            }
+
+            // If no prayer left today, next is Fajr tomorrow
+            if (!nextPrayer) {
+                nextPrayer = 'Fajr';
+                const [h, m] = timings['Fajr'].split(':');
+                nextTime = new Date();
+                nextTime.setDate(now.getDate() + 1);
+                nextTime.setHours(h, m, 0, 0);
+            }
+
+            // 2. Render Widget
+            const container = document.getElementById('prayer-list');
+            let widget = document.getElementById('countdown-widget');
+
+            if (!widget) {
+                widget = document.createElement('div');
+                widget.id = 'countdown-widget';
+                widget.className = "mb-2 text-center pb-2 border-b border-slate-700/50 mx-4 shrink-0";
+                container.parentNode.insertBefore(widget, container); // Insert above list
+            }
+
+            // Calc difference
+            const diff = nextTime - now;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            let timeString = `${hours}h ${minutes}m`;
+            if (hours === 0 && minutes < 60) timeString = `${minutes}m ${seconds}s`; // Show seconds if close
+
+
+            widget.innerHTML = `
+                <p class="text-[8px] font-bold theme-text-muted uppercase tracking-widest mb-0.5">Next Prayer</p>
+                <h3 class="text-xs font-bold theme-text-highlight leading-none mb-0.5">${nextPrayer}</h3>
+                <p class="text-lg font-mono font-bold theme-text-primary tabular-nums tracking-tight">${timeString}</p>
+            `;
+
+        }
+
+        // Call countdown every second
+        setInterval(renderPrayerCountdown, 1000);
+
+
+
+        // ============================================
+        // THEME ENGINE
+        // ============================================
+        let currentThemeColors = {};
+
+        function applyTheme() {
+            const theme = config.theme || 'dark';
+            const body = document.body;
+            // Reset base classes
+            body.className = "h-screen w-screen overflow-hidden relative transition-colors duration-700 font-serif";
+
+            if (theme === 'light') {
+                body.classList.add('bg-slate-100', 'text-slate-800');
+                currentThemeColors = { qr: "0f172a" };
+
+                // Set CSS Variables for specific elements
+                document.documentElement.style.setProperty('--bg-primary', '#f1f5f9');
+                document.documentElement.style.setProperty('--bg-secondary', '#ffffff');
+                document.documentElement.style.setProperty('--text-primary', '#0f172a');
+                document.documentElement.style.setProperty('--text-secondary', '#334155');
+                document.documentElement.style.setProperty('--text-muted', '#64748b');
+
+            } else if (theme === 'green') {
+                body.classList.add('bg-emerald-950', 'text-emerald-100');
+                currentThemeColors = { qr: "064e3b" };
+                document.documentElement.style.setProperty('--bg-primary', '#022c22');
+                // ... other vars
+            } else {
+                // Dark (Default)
+                body.classList.add('bg-slate-950', 'text-slate-100');
+                currentThemeColors = { qr: "000000" };
+                document.documentElement.style.setProperty('--bg-primary', '#020617');
+                document.documentElement.style.setProperty('--bg-secondary', '#0f172a');
+                document.documentElement.style.setProperty('--text-primary', '#f8fafc');
+                document.documentElement.style.setProperty('--text-secondary', '#e2e8f0');
+                document.documentElement.style.setProperty('--text-muted', '#94a3b8');
+            }
+
+            // Update specific dynamic classes if needed
+            const sidebar = document.querySelector('aside');
+            if (sidebar) {
+                if (theme === 'light') {
+                    sidebar.className = "col-span-3 bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden shadow-xl z-10";
+                } else {
+                    sidebar.className = "col-span-3 bg-slate-950 border-r border-slate-800 flex flex-col h-full overflow-hidden";
+                }
+            }
         }
 
         function renderOnDuty() {
