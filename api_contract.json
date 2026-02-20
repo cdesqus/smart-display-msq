@@ -1,0 +1,23 @@
+{
+  "status": "success",
+  "data": {
+    "info": {
+      "name": "Masjid Darul Aman",
+      "address": "1 Jalan Eunos, Singapore",
+      "logo": "https://example.com/logo.png"
+    },
+    "config": {
+      "runningText": "Welcome to Masjid Darul Aman. Please switch off your mobile phones during prayer.",
+      "iqomahDuration": 300,
+      "sholatDuration": 600
+    },
+    "emergency": {
+      "active": false,
+      "message": "Please move car B 1234 immediately."
+    },
+    "slides": [
+      "https://example.com/slide1.jpg",
+      "https://example.com/slide2.jpg"
+    ]
+  }
+}

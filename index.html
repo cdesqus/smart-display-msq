@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosque Display System</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 950: '#0f172a' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Orbitron', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Transitions */
+        .fade-enter { opacity: 0; }
+        .fade-enter-active { opacity: 1; transition: opacity 1s ease-in-out; }
+        .fade-exit { opacity: 1; }
+        .fade-exit-active { opacity: 0; transition: opacity 1s ease-in-out; }
+
+        /* Hide Scrollbar */
+        body::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-white h-screen w-screen overflow-hidden select-none">
+
+    <!-- START SCREEN / AUTH ERROR -->
+    <div id="start-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950">
+        <div class="text-center p-10 glass rounded-2xl max-w-md w-full">
+            <i class="fa-solid fa-mosque text-6xl text-emerald-500 mb-6"></i>
+            <h1 class="text-2xl font-bold mb-2">Mosque Display System</h1>
+            <p id="start-status" class="text-gray-400 mb-8">Checking configuration...</p>
+            <button id="btn-start" class="hidden px-8 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold transition-all shadow-lg shadow-emerald-900/50">
+                <i class="fa-solid fa-play mr-2"></i> START DISPLAY
+            </button>
+        </div>
+    </div>
+
+    <!-- EMERGENCY OVERLAY -->
+    <div id="emergency-overlay" class="hidden fixed inset-0 z-40 bg-red-900/95 flex flex-col items-center justify-center text-center animate-pulse-fast">
+        <i class="fa-solid fa-triangle-exclamation text-9xl text-yellow-400 mb-8"></i>
+        <h1 class="text-6xl font-bold mb-4">EMERGENCY NOTICE</h1>
+        <p id="emergency-text" class="text-4xl font-mono max-w-4xl text-white">ATTENTION PLEASE</p>
+    </div>
+
+    <!-- MAIN APP LAYOUT -->
+    <div id="app" class="hidden h-full flex flex-col p-4 gap-4">
+        
+        <!-- TOP GRID -->
+        <div class="flex-1 grid grid-cols-4 gap-4 h-[calc(100%-80px)]">
+            
+            <!-- LEFT SIDEBAR -->
+            <aside class="col-span-1 flex flex-col gap-4">
+                
+                <!-- CLOCK WIDGET -->
+                <div class="glass rounded-xl p-6 text-center shadow-2xl relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent"></div>
+                    <div id="clock-time" class="text-6xl font-mono font-bold tracking-tighter mb-2">--:--</div>
+                    <div id="clock-sec" class="text-xl font-mono text-emerald-400 absolute top-8 right-6">00</div>
+                    <div id="date-gregorian" class="text-sm text-gray-300 font-medium uppercase tracking-widest mb-1">...</div>
+                    <div id="date-hijri" class="text-xs text-emerald-500/80 font-mono">...</div>
+                </div>
+
+                <!-- MOSQUE INFO -->
+                <div class="glass rounded-xl p-6 text-center flex flex-col items-center justify-center gap-3">
+                    <img id="mosque-logo" src="" alt="Logo" class="w-16 h-16 object-contain hidden">
+                    <div>
+                        <h2 id="mosque-name" class="font-bold text-lg leading-tight">...</h2>
+                        <p id="mosque-address" class="text-xs text-gray-400 mt-1">...</p>
+                    </div>
+                </div>
+
+                <!-- PRAYER TIMES -->
+                <div class="glass rounded-xl flex-1 flex flex-col overflow-hidden">
+                    <div class="bg-white/5 p-3 text-center border-b border-white/5">
+                        <h3 class="font-mono text-sm tracking-widest text-emerald-400">PRAYER TIMES</h3>
+                    </div>
+                    <div id="prayer-list" class="flex-1 flex flex-col divide-y divide-white/5">
+                        <!-- Items injected by JS -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT AREA -->
+            <main class="col-span-3 relative glass rounded-2xl overflow-hidden shadow-2xl bg-black">
+                
+                <!-- SLIDER -->
+                <div id="slider-container" class="absolute inset-0 transition-opacity duration-1000">
+                    <img id="slide-img" class="w-full h-full object-cover" src="" alt="Slide">
+                </div>
+
+                <!-- IQOMAH COUNTDOWN OVERLAY -->
+                <div id="iqomah-overlay" class="hidden absolute inset-0 z-10 bg-black/90 flex flex-col items-center justify-center">
+                    <div class="text-emerald-500 text-3xl font-bold mb-4 tracking-[0.5em] uppercase">Iqomah In</div>
+                    <div id="iqomah-timer" class="text-[12rem] font-mono font-bold leading-none text-white">00:00</div>
+                    <div id="next-prayer-name" class="text-4xl text-gray-400 mt-8 font-serif">...</div>
+                </div>
+
+                <!-- SHOLAT BLACK SCREEN -->
+                <div id="sholat-screen" class="hidden absolute inset-0 z-20 bg-black flex flex-col items-center justify-center">
+                    <p class="text-gray-600 text-sm opacity-50 font-mono tracking-widest animate-pulse">PLEASE STRAIGHTEN YOUR ROWS</p>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- FOOTER / RUNNING TEXT -->
+        <footer class="h-20 glass rounded-xl flex items-center px-6 overflow-hidden relative">
+            <div class="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-950 to-transparent z-10"></div>
+            <div class="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-950 to-transparent z-10"></div>
+            
+            <div class="whitespace-nowrap w-full overflow-hidden">
+                <div id="running-text" class="inline-block text-2xl font-medium text-emerald-100 pl-[100%] animate-[marquee_20s_linear_infinite]">
+                    Loading...
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- AUDIO SYSTEM HIDDEN -->
+
+    <script>
+        // --- CONSTANTS & STATE ---
+        const CONFIG = {
+            apiBase: '/api/display-config', // Replace with real endpoint or use query param
+            pollInterval: 30000,
+            slideInterval: 8000
+        };
+
+        const STATE = {
+            token: null,
+            data: null, // Full API response
+            prayerTimes: null, // Aladhan data
+            timer: null,
+            slideIndex: 0,
+            activePrayer: null, // { name, timeObj }
+            nextPrayer: null,   // { name, timeObj }
+            mode: 'NORMAL', // 'NORMAL', 'IQOMAH', 'SHOLAT'
+            iqomahSecondsAPI: 300,
+            sholatSecondsAPI: 600,
+            iqomahRemaining: 0,
+            sholatRemaining: 0
+        };
+
+        // DOM Elements
+        const els = {
+            startScreen: document.getElementById('start-screen'),
+            startStatus: document.getElementById('start-status'),
+            btnStart: document.getElementById('btn-start'),
+            app: document.getElementById('app'),
+            emergencyOverlay: document.getElementById('emergency-overlay'),
+            emergencyText: document.getElementById('emergency-text'),
+            
+            clockTime: document.getElementById('clock-time'),
+            clockSec: document.getElementById('clock-sec'),
+            dateGreg: document.getElementById('date-gregorian'),
+            dateHijri: document.getElementById('date-hijri'),
+            
+            mosqueName: document.getElementById('mosque-name'),
+            mosqueAddr: document.getElementById('mosque-address'),
+            mosqueLogo: document.getElementById('mosque-logo'),
+            
+            prayerList: document.getElementById('prayer-list'),
+            runningText: document.getElementById('running-text'),
+            
+            slideImg: document.getElementById('slide-img'),
+            iqomahOverlay: document.getElementById('iqomah-overlay'),
+            iqomahTimer: document.getElementById('iqomah-timer'),
+            nextPrayerName: document.getElementById('next-prayer-name'),
+            sholatScreen: document.getElementById('sholat-screen')
+        };
+
+        // Audio Context
+        let audioCtx;
+
+        // --- CORE FUNCTIONS ---
+
+        // 1. INITIALIZATION
+        function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            STATE.token = urlParams.get('token');
+
+            if (!STATE.token) {
+                els.startStatus.textContent = "Error: Missing Authentication Token";
+                els.startStatus.classList.add('text-red-500');
+                return;
+            }
+
+            els.startStatus.textContent = "Ready. Click to start.";
+            els.btnStart.classList.remove('hidden');
+            els.btnStart.addEventListener('click', startDisplay);
+        }
+
+        async function startDisplay() {
+            // Fullscreen
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+            } catch (e) { console.warn("Fullscreen denied", e); }
+
+            // Audio Actions
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            // UI Switch
+            els.startScreen.remove();
+            els.app.classList.remove('hidden');
+
+            // Initial Fetch
+            await Promise.all([fetchConfig(), fetchPrayerTimes()]);
+            
+            // Start Loops
+            setInterval(fetchConfig, CONFIG.pollInterval);
+            setInterval(runSlider, CONFIG.slideInterval);
+            setInterval(tick, 1000);
+            
+            // First tick immediately
+            render();
+        }
+
+        // 2. DATA FETCHING
+        async function fetchConfig() {
+            try {
+                // In a real scenario, this fetches from the backend
+                // For demo, we might simulate if fetch fails or use a local file
+                const response = await fetch(`${CONFIG.apiBase}?token=${STATE.token}`);
+                if (!response.ok) throw new Error("API Error");
+                
+                const json = await response.json();
+                if (json.status === 'success') {
+                    STATE.data = json.data;
+                    updateConfigUI();
+                }
+            } catch (e) {
+                console.error("Fetch Config Error:", e);
+                // Fallback for demo without backend
+                if (!STATE.data) useMockData(); 
+            }
+        }
+        
+        // Mock Data for Demo purposes if API fails
+        function useMockData() {
+            STATE.data = {
+                info: { name: "Masjid Darul Aman", address: "1 Jalan Eunos, Singapore", logo: "" },
+                config: { runningText: "Welcome to Masjid Darul Aman. Please maintain silence.", iqomahDuration: 10, sholatDuration: 20 }, // Short durations for testing
+                emergency: { active: false, message: "" },
+                slides: ["https://images.unsplash.com/photo-1542385151-efd5c0bd77bf?auto=format&fit=crop&q=80&w=1920", "https://images.unsplash.com/photo-1564121211835-e88c852648ab?auto=format&fit=crop&q=80&w=1920"]
+            };
+            updateConfigUI();
+        }
+
+        async function fetchPrayerTimes() {
+            try {
+                const today = new Date();
+                // 11 = Majlis Ugama Islam Singapura
+                const url = `https://api.aladhan.com/v1/timings/${today.getDate()}-${today.getMonth()+1}-${today.getFullYear()}?latitude=1.3521&longitude=103.8198&method=11`;
+                
+                const res = await fetch(url);
+                const json = await res.json();
+                
+                if (json.code === 200) {
+                    STATE.prayerTimes = json.data;
+                }
+            } catch (e) { console.error("Prayer Time API Error", e); }
+        }
+
+        // 3. UI UPDATES
+        function updateConfigUI() {
+            if (!STATE.data) return;
+
+            // Info
+            els.mosqueName.textContent = STATE.data.info.name;
+            els.mosqueAddr.textContent = STATE.data.info.address;
+            if (STATE.data.info.logo) {
+                els.mosqueLogo.src = STATE.data.info.logo;
+                els.mosqueLogo.classList.remove('hidden');
+            }
+
+            // Config
+            CONFIG.iqomahSecondsAPI = STATE.data.config.iqomahDuration;
+            CONFIG.sholatSecondsAPI = STATE.data.config.sholatDuration;
+            
+            // Running Text (Only update if changed to avoid jump)
+            const newText = STATE.data.config.runningText;
+            if (els.runningText.textContent.trim() !== newText) {
+                els.runningText.textContent = newText;
+            }
+
+            // Emergency
+            if (STATE.data.emergency.active) {
+                els.emergencyOverlay.classList.remove('hidden');
+                els.emergencyText.textContent = STATE.data.emergency.message;
+                playAlarmSound();
+            } else {
+                els.emergencyOverlay.classList.add('hidden');
+            }
+        }
+
+        function runSlider() {
+            if (STATE.mode !== 'NORMAL' || !STATE.data || !STATE.data.slides.length) return;
+            
+            STATE.slideIndex = (STATE.slideIndex + 1) % STATE.data.slides.length;
+            const imgUrl = STATE.data.slides[STATE.slideIndex];
+            
+            // Simple fade effect
+            els.slideImg.style.opacity = 0;
+            setTimeout(() => {
+                els.slideImg.src = imgUrl;
+                els.slideImg.style.opacity = 1;
+            }, 200);
+        }
+
+        // 4. MAIN LOOP (State Machine)
+        function tick() {
+            const now = new Date();
+            
+            // Update Clock
+            els.clockTime.textContent = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' });
+            els.clockSec.textContent = now.getSeconds().toString().padStart(2, '0');
+            els.dateGreg.textContent = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            
+            if (STATE.prayerTimes) {
+                const hijri = STATE.prayerTimes.date.hijri;
+                els.dateHijri.textContent = `${hijri.day} ${hijri.month.en} ${hijri.year}`;
+                
+                checkPrayerState(now);
+                renderPrayerList(now);
+            }
+            
+            handleStateLogic();
+        }
+
+        function checkPrayerState(now) {
+            if (!STATE.prayerTimes) return;
+            
+            // Define prayer order
+            const PRAYERS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            const timings = STATE.prayerTimes.timings;
+            
+            let current = null;
+            let next = null;
+            
+            // Find next prayer
+            for (let i = 0; i < PRAYERS.length; i++) {
+                const pName = PRAYERS[i];
+                const pTimeStr = timings[pName]; // "HH:MM"
+                const [h, m] = pTimeStr.split(':');
+                const pDate = new Date(now);
+                pDate.setHours(h, m, 0, 0);
+                
+                if (pDate > now) {
+                    next = { name: pName, time: pDate };
+                    break;
+                }
+            }
+            
+            // Logic for triggering Iqomah
+            // If NOW == Prayer Time (within 1 second window)
+            // Note: In production, better to store "last processed prayer" to avoid double triggers
+            // But strict checking prevents re-entry if state changes
+            
+            if (STATE.mode === 'NORMAL' && next) {
+               // Check if we just passed a prayer time (e.g. now 12:00:00)
+               // Simple check: absolute difference < 1000ms
+               // Better: check if now >= prayerTime && now < prayerTime + 2s
+            }
+            
+            // For robustness, find the specific prayer we are supposedly WAITING for
+            if (next) STATE.nextPrayer = next;
+            
+            // TRIGGER IQOMAH
+            // We check if "now" matches any prayer time exactly
+            PRAYERS.forEach(p => {
+                if (p === 'Sunrise') return; // No iqomah for Sunrise
+                const [h, m] = timings[p].split(':');
+                const pDate = new Date(now);
+                pDate.setHours(h, m, 0, 0);
+
+                if (Math.abs(now.getTime() - pDate.getTime()) < 1000 && STATE.mode === 'NORMAL') {
+                    enterIqomah(p);
+                }
+            });
+        }
+
+        function handleStateLogic() {
+            if (STATE.mode === 'IQOMAH') {
+                if (STATE.iqomahRemaining > 0) {
+                    STATE.iqomahRemaining--;
+                    updateIqomahUI();
+                } else {
+                    enterSholat();
+                }
+            } else if (STATE.mode === 'SHOLAT') {
+                if (STATE.sholatRemaining > 0) {
+                    STATE.sholatRemaining--;
+                } else {
+                    enterNormal();
+                }
+            }
+        }
+
+        function enterIqomah(prayerName) {
+            STATE.mode = 'IQOMAH';
+            STATE.activePrayer = prayerName;
+            STATE.iqomahRemaining = STATE.data ? STATE.data.config.iqomahDuration : 300;
+            
+            // Beep
+            playBeep();
+            
+            // UI
+            els.iqomahOverlay.classList.remove('hidden');
+            els.nextPrayerName.textContent = `${prayerName} Prayer`;
+            updateIqomahUI();
+        }
+
+        function updateIqomahUI() {
+            const m = Math.floor(STATE.iqomahRemaining / 60);
+            const s = STATE.iqomahRemaining % 60;
+            els.iqomahTimer.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function enterSholat() {
+            STATE.mode = 'SHOLAT';
+            STATE.sholatRemaining = STATE.data ? STATE.data.config.sholatDuration : 600;
+            
+            // Beep
+            playBeep(); 
+
+            // UI
+            els.iqomahOverlay.classList.add('hidden');
+            els.sholatScreen.classList.remove('hidden');
+        }
+
+        function enterNormal() {
+            STATE.mode = 'NORMAL';
+            els.sholatScreen.classList.add('hidden');
+        }
+
+        function renderPrayerList(now) {
+            if (!STATE.prayerTimes) return;
+            const PRAYERS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            const timings = STATE.prayerTimes.timings;
+            
+            let html = '';
+            
+            PRAYERS.forEach(p => {
+                const time = timings[p];
+                // Highlight next prayer
+                let isActive = false;
+                if (STATE.nextPrayer && STATE.nextPrayer.name === p) isActive = true;
+                if (STATE.mode === 'IQOMAH' && STATE.activePrayer === p) isActive = true; // Highlighting logic can be refined
+                
+                const bgClass = isActive ? 'bg-emerald-500/20 border-l-4 border-emerald-500' : 'hover:bg-white/5 border-l-4 border-transparent';
+                const textClass = isActive ? 'text-white' : 'text-gray-400';
+                
+                // Convert 24h to 12h for display if desired, keeping 24h for now as standard
+                html += `
+                    <div class="flex justify-between items-center p-4 transition-all ${bgClass} ${textClass}">
+                        <span class="font-medium text-lg">${p}</span>
+                        <span class="font-mono text-xl font-bold">${time}</span>
+                    </div>
+                `;
+            });
+            els.prayerList.innerHTML = html;
+        }
+
+        // 5. AUDIO SYSTEM
+        function playBeep() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.value = 880; // A5
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 1);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1);
+        }
+
+        function playAlarmSound() {
+            if (!audioCtx) return;
+            // Only play if not already playing roughly (throttle)
+            // For simplicity in this loop, we assume the pulse animation handles the visual urgency
+            // and we play a short siren tone every tick or so if urgent.
+            // Better: trigger once loop.
+            
+            if (Math.random() > 0.95) { // Occasional beep while emergency is active
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(1000, audioCtx.currentTime + 0.5);
+                
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        // Add CSS Animation for Marquee manually since Tailwind doesn't have it built-in by default
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes marquee {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-100%); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Run
+        init();
+
+    </script>
+</body>
+</html>

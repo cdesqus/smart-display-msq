@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosque Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Lateef&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Amiri', serif;
+            background-color: #F8FAFC;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 3px;
+        }
+
+        .page-trans {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-field {
+            width: 100%;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .input-field:focus {
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 h-screen w-screen overflow-hidden flex">
+
+    <!-- === SIDEBAR === -->
+    <aside class="w-[280px] bg-[#0F172A] flex flex-col shrink-0 relative z-20 shadow-xl">
+        <div class="h-20 flex items-center px-8 border-b border-slate-800/50">
+            <div
+                class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center mr-3 shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                <i class="fa-solid fa-moon text-white text-sm"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-white text-lg tracking-tight leading-none">Mosque<span
+                        class="text-emerald-500">OS</span></h1>
+                <p class="text-[10px] text-slate-400 font-medium tracking-wide">DIGITAL SIGNAGE</p>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-6 px-4 space-y-8">
+            <div>
+                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Main Menu</p>
+                <nav class="space-y-1">
+                    <div onclick="switchTab('general')" id="nav-general"
+                        class="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-slate-800 bg-emerald-600 text-white shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-layer-group w-5 group-hover:text-emerald-400 transition-colors"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </div>
+                </nav>
+            </div>
+
+            <div>
+                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Display Content</p>
+                <nav class="space-y-1">
+                    <div onclick="switchTab('content')" id="nav-content"
+                        class="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-slate-800 text-slate-400">
+                        <i class="fa-solid fa-bullhorn w-5 group-hover:text-emerald-400 transition-colors"></i>
+                        <span class="font-medium group-hover:text-emerald-400 transition-colors">Announcements</span>
+                    </div>
+                    <div onclick="switchTab('slides')" id="nav-slides"
+                        class="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-slate-800 text-slate-400">
+                        <i class="fa-regular fa-images w-5 group-hover:text-emerald-400 transition-colors"></i>
+                        <span class="font-medium group-hover:text-emerald-400 transition-colors">Slide Gallery</span>
+                    </div>
+                    <div onclick="switchTab('materi')" id="nav-materi"
+                        class="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-slate-800 text-slate-400">
+                        <i class="fa-solid fa-file-powerpoint w-5 group-hover:text-emerald-400 transition-colors"></i>
+                        <span class="font-medium group-hover:text-emerald-400 transition-colors">Materi
+                            Presentation</span>
+                        <span id="materi-live-badge"
+                            class="hidden ml-auto text-[9px] font-extrabold bg-red-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">LIVE</span>
+                    </div>
+                </nav>
+            </div>
+
+            <div>
+                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Scheduling</p>
+                <nav class="space-y-1">
+                    <div onclick="switchTab('jumuah')" id="nav-jumuah"
+                        class="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-slate-800 text-slate-400">
+                        <i class="fa-solid fa-users w-5 group-hover:text-emerald-400 transition-colors"></i>
+                        <span class="font-medium group-hover:text-emerald-400 transition-colors">Jumu'ah Schedule</span>
+                    </div>
+                </nav>
+            </div>
+
+            <div>
+                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">System</p>
+                <nav class="space-y-1">
+                    <div onclick="switchTab('emergency')" id="nav-emergency"
+                        class="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-slate-800 text-slate-400 hover:!text-red-400">
+                        <i class="fa-solid fa-triangle-exclamation w-5 group-hover:text-red-400 transition-colors"></i>
+                        <span class="font-medium group-hover:text-red-400 transition-colors">Emergency Override</span>
+                    </div>
+                </nav>
+            </div>
+
+
+            <div class="p-4 border-t border-slate-800/50 bg-[#0B1121]">
+                <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/80 transition cursor-pointer group"
+                    onclick="handleLogout()">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-emerald-900/30 border border-emerald-500/20 flex items-center justify-center text-emerald-500 font-bold group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                        A</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-white truncate">Administrator</p>
+                        <p class="text-xs text-slate-500 truncate group-hover:text-slate-300">Log out</p>
+                    </div>
+                    <i
+                        class="fa-solid fa-arrow-right-from-bracket text-slate-600 group-hover:text-white transition"></i>
+                </div>
+            </div>
+    </aside>
+
+    <!-- === MAIN PANEL === -->
+    <main class="flex-1 flex flex-col bg-[#F8FAFC] relative overflow-hidden">
+        <header
+            class="h-20 bg-white border-b border-slate-200/60 px-8 flex items-center justify-between shrink-0 sticky top-0 z-10">
+            <div>
+                <h2 id="header-title" class="text-xl font-bold text-slate-900">Dashboard</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Manage your digital display settings</p>
+            </div>
+            <a id="live-view-btn" href="#" target="_blank"
+                class="group flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-emerald-600 transition shadow-lg shadow-slate-900/20 transform active:scale-95">
+                <span>Live View</span>
+                <i
+                    class="fa-solid fa-arrow-up-right-from-square text-xs opacity-70 group-hover:opacity-100 transition"></i>
+            </a>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 scroll-smooth">
+
+            <!-- GENERAL TAB -->
+            <section id="tab-general" class="page-trans max-w-5xl mx-auto space-y-6">
+                <!-- Connect URL Section -->
+                <div class="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-indigo-900 text-lg">Display Connection</h3>
+                        <p class="text-sm text-indigo-600/80">Use this Unique URL to connect your TV display securely.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <code id="display-url-box"
+                            class="bg-white px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 font-mono text-sm max-w-md truncate select-all">...</code>
+                        <button onclick="copyLink()"
+                            class="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800 p-2 rounded-lg transition shadow-sm"
+                            title="Copy Link"><i class="fa-solid fa-copy"></i></button>
+                        <button onclick="regenerateToken()" class="text-indigo-600 hover:text-indigo-800 p-2"
+                            title="Regenerate Token"><i class="fa-solid fa-arrows-rotate"></i></button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div
+                        class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fa-solid fa-mosque"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-900">Mosque Identity</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                            <div class="input-group">
+                                <label>Mosque Name</label>
+                                <input type="text" id="mosqueName" class="input-field"
+                                    placeholder="e.g. Masjid Al-Hidayah">
+                            </div>
+                            <div class="input-group">
+                                <label>Address</label>
+                                <input type="text" id="mosqueAddress" class="input-field" placeholder="City, Country">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 border-t border-slate-100 pt-5">
+                            <div class="input-group">
+                                <label>Latitude</label>
+                                <input type="number" step="any" id="locLat" class="input-field" placeholder="1.3521">
+                            </div>
+                            <div class="input-group">
+                                <label>Longitude</label>
+                                <input type="number" step="any" id="locLng" class="input-field" placeholder="103.8198">
+                            </div>
+                            <div class="input-group">
+                                <label>Timezone</label>
+                                <select id="locTz" class="input-field bg-white">
+                                    <option value="Asia/Singapore">Singapore (GMT+8)</option>
+                                    <option value="Asia/Jakarta">Jakarta (GMT+7)</option>
+                                    <option value="Asia/Kuala_Lumpur">Kuala Lumpur (GMT+8)</option>
+                                    <option value="Asia/Dubai">Dubai (GMT+4)</option>
+                                    <option value="Europe/London">London (GMT+0)</option>
+                                    <option value="America/New_York">New York (GMT-5)</option>
+                                    <option value="UTC">UTC</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <div
+                        class="bg-emerald-500 text-white p-6 rounded-2xl shadow-emerald-200 shadow-xl flex flex-col justify-between relative overflow-hidden hover:scale-[1.02] transition-transform">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                        <div>
+                            <p class="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1">System Status
+                            </p>
+                            <h3 class="text-2xl font-bold flex items-center gap-2">
+                                <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div> Online
+                            </h3>
+                        </div>
+                        <div class="mt-8">
+                            <p class="text-emerald-100 text-xs">Token ID</p>
+                            <p id="token-display" class="font-mono text-sm opacity-80">...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div
+                        class="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-orange-50 text-orange-600 rounded-lg"><i class="fa-regular fa-clock"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-900">Timing</h3>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="flex justify-between text-sm font-bold text-slate-700 mb-2">Iqomah
+                                    <span class="text-slate-400 font-normal" id="disp-iqomah">300s</span></label>
+                                <input type="range" id="iqomahDuration" min="10" max="900"
+                                    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                    oninput="document.getElementById('disp-iqomah').innerText = this.value + 's'">
+                                <button onclick="testState('IQOMAH')"
+                                    class="mt-2 text-xs bg-emerald-50 text-emerald-600 px-3 py-1 rounded border border-emerald-100 hover:bg-emerald-100 transition"><i
+                                        class="fa-solid fa-play mr-1"></i> Test (15s)</button>
+                            </div>
+
+                            <!-- Tarawih Time (Ramadhan) -->
+                            <div>
+                                <label class="flex justify-between text-sm font-bold text-slate-700 mb-2">Tarawih Time
+                                    (Ramadhan)</label>
+                                <input type="time" id="tarawihTime" class="input-field">
+                                <p class="text-[10px] text-slate-400 mt-1">Only active during Ramadhan month</p>
+                            </div>
+
+                            <div>
+                                <label class="flex justify-between text-sm font-bold text-slate-700 mb-2">Straighten
+                                    Rows (Black Screen)
+                                    <span class="text-slate-400 font-normal" id="disp-sholat">600s</span></label>
+                                <input type="range" id="sholatDuration" min="10" max="1200"
+                                    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                    oninput="document.getElementById('disp-sholat').innerText = this.value + 's'">
+                                <button onclick="testState('SHOLAT')"
+                                    class="mt-2 text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded border border-slate-200 hover:bg-slate-200 transition"><i
+                                        class="fa-solid fa-mobile-screen-button mr-1"></i> Test (15s)</button>
+
+                                <!-- Reset -->
+                                <div class="pt-4 mt-2">
+                                    <button onclick="resetState()"
+                                        class="w-full text-xs bg-red-50 text-red-600 px-3 py-2 rounded border border-red-100 hover:bg-red-100 transition font-bold"><i
+                                            class="fa-solid fa-stop mr-1"></i> Force Stop / Reset Display</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-volume-high"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-900">Audio</h3>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="input-group">
+                                <label>Adzan Audio URL (MP3)</label>
+                                <input type="text" id="adzanUrl" class="input-field"
+                                    placeholder="https://example.com/adzan.mp3">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="testAudio()"
+                                    class="text-xs bg-slate-100 px-3 py-1 rounded hover:bg-slate-200"><i
+                                        class="fa-solid fa-play mr-1"></i> Test</button>
+                                <p class="text-[10px] text-slate-400">Leave empty for default beep</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-purple-50 text-purple-600 rounded-lg"><i class="fa-solid fa-palette"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-900">Display Settings</h3>
+                        </div>
+                        <div class="input-group">
+                            <label>Theme</label>
+                            <select id="displayTheme" class="input-field bg-white">
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTENT TAB -->
+            <section id="tab-content" class="page-trans hidden max-w-4xl mx-auto space-y-6">
+
+                <!-- Recruitment Card -->
+                <div
+                    class="bg-white p-8 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i
+                                    class="fa-solid fa-users-viewfinder"></i></div>
+                            <h3 class="font-bold text-slate-900">Volunteer Recruitment</h3>
+                        </div>
+                        <label class="switch relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="recruitActive" class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
+                            </div>
+                            <span class="ml-3 text-sm font-medium text-slate-900">Active</span>
+                        </label>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="input-group">
+                            <label>Role Needed</label>
+                            <input type="text" id="recruitRole" class="input-field" placeholder="e.g. Event Volunteers">
+                        </div>
+                        <div class="input-group">
+                            <label>Contact Info</label>
+                            <input type="text" id="recruitContact" class="input-field" placeholder="e.g. Call 0812...">
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-4 italic">Enabling this will inject a recruitment slide into the
+                        rotation.</p>
+                </div>
+
+                <!-- Running Text -->
+                <div
+                    class="bg-white p-8 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-purple-50 text-purple-600 rounded-lg"><i class="fa-solid fa-scroll"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-900">Running Text (Marquee)</h3>
+                        </div>
+                        <span
+                            class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200">Visible
+                            on Footer</span>
+                    </div>
+                    <div class="relative">
+                        <textarea id="runningText" rows="6"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm leading-relaxed text-slate-700 focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all resize-none shadow-inner"
+                            placeholder="Type your announcement here..."></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SLIDES TAB -->
+            <section id="tab-slides" class="page-trans hidden max-w-6xl mx-auto h-full flex flex-col">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg">Slide Gallery</h3>
+                        <p class="text-sm text-slate-500">Manage promotional images</p>
+                    </div>
+                    <label
+                        class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center gap-2 hover:-translate-y-0.5 transform">
+                        <i class="fa-solid fa-upload"></i> Upload Media
+                        <input type="file" id="imageInput" accept="image/*,video/mp4,video/webm,application/pdf"
+                            class="hidden" multiple onchange="handleImageUpload(this)">
+                    </label>
+                </div>
+                <div id="slideList" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 pb-20"></div>
+            </section>
+
+            <!-- JUMUAH TAB -->
+            <section id="tab-jumuah" class="page-trans hidden max-w-5xl mx-auto space-y-8">
+                <div class="bg-white p-8 rounded-2xl border border-slate-200/60 shadow-sm">
+                    <h3 class="font-bold text-slate-900 text-lg mb-6 flex items-center gap-2"><i
+                            class="fa-solid fa-calendar-plus text-emerald-500"></i> Add Schedule</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div class="input-group">
+                            <label>Date (Friday)</label>
+                            <input type="date" id="jumDate" class="input-field">
+                        </div>
+                        <div class="input-group">
+                            <label>Khotib</label>
+                            <input type="text" id="jumKhotib" class="input-field" placeholder="Khotib Name">
+                        </div>
+                        <div class="input-group">
+                            <label>Imam</label>
+                            <input type="text" id="jumImam" class="input-field" placeholder="Imam Name">
+                        </div>
+                        <div class="input-group">
+                            <label>Muadzin</label>
+                            <input type="text" id="jumMuadzin" class="input-field" placeholder="Muadzin Name">
+                        </div>
+                        <button onclick="addSchedule()"
+                            class="bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20 active:scale-95">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <th class="p-4">Date</th>
+                                <th class="p-4">Khotib</th>
+                                <th class="p-4">Imam</th>
+                                <th class="p-4">Muadzin</th>
+                                <th class="p-4 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleList" class="text-sm text-slate-700 divide-y divide-slate-100">
+                            <!-- JS Injected -->
+                        </tbody>
+                    </table>
+                    <div id="empty-schedule" class="hidden p-8 text-center text-slate-400 italic">No schedules added
+                        yet.</div>
+                </div>
+            </section>
+
+
+            <!-- MATERI TAB -->
+            <section id="tab-materi" class="page-trans hidden max-w-3xl mx-auto space-y-6 pt-2">
+
+                <!-- Status Banner -->
+                <div id="materi-status-banner"
+                    class="hidden bg-red-50 border border-red-200 rounded-2xl px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <p class="font-bold text-red-700 text-sm">Presentation LIVE on Display</p>
+                    </div>
+                    <button onclick="stopMateri()"
+                        class="bg-red-500 hover:bg-red-600 text-white font-bold px-5 py-2 rounded-xl text-sm transition active:scale-95 shadow">
+                        <i class="fa-solid fa-stop mr-2"></i>Stop Presenting
+                    </button>
+                </div>
+
+                <!-- Upload PDF -->
+                <div class="bg-white p-8 rounded-2xl border border-slate-200/60 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="p-2 bg-red-50 text-red-500 rounded-lg"><i class="fa-solid fa-file-pdf"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-900">Upload PDF / Presentation</h3>
+                            <p class="text-xs text-slate-400">Max 5MB. PDF akan tampil full screen di layar.</p>
+                        </div>
+                    </div>
+                    <div id="materi-pdf-drop"
+                        class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-emerald-400 hover:bg-emerald-50/40 transition cursor-pointer"
+                        onclick="document.getElementById('materiPdfInput').click()">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-300 mb-3"></i>
+                        <p class="text-sm font-medium text-slate-500">Click to upload PDF</p>
+                        <p class="text-xs text-slate-400 mt-1">or drag and drop</p>
+                        <input type="file" id="materiPdfInput" accept="application/pdf" class="hidden"
+                            onchange="handleMateriPdf(this)">
+                    </div>
+                    <div id="materi-pdf-preview"
+                        class="hidden mt-4 flex items-center gap-4 bg-slate-50 rounded-xl p-4 border border-slate-200">
+                        <i class="fa-solid fa-file-pdf text-3xl text-red-500"></i>
+                        <div class="flex-1 min-w-0">
+                            <p id="materi-pdf-name" class="font-bold text-slate-800 text-sm truncate">---</p>
+                            <p class="text-xs text-slate-400">Ready to present</p>
+                        </div>
+                        <button onclick="presentMateri('pdf')"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition active:scale-95 shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+                            <i class="fa-solid fa-display"></i> Present Now
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Link (Canva / Google Slides) -->
+                <div class="bg-white p-8 rounded-2xl border border-slate-200/60 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="p-2 bg-purple-50 text-purple-500 rounded-lg"><i class="fa-solid fa-link"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-900">Canva / Google Slides / Link</h3>
+                            <p class="text-xs text-slate-400">Paste link, auto-converted to embeddable format.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-step instructions -->
+                    <div class="space-y-3 mb-5">
+
+                        <!-- Google Slides -->
+                        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs">
+                            <p class="font-bold text-blue-800 mb-2"><i class="fa-brands fa-google mr-1"></i>Google
+                                Slides</p>
+                            <ol class="list-decimal pl-4 text-blue-700 space-y-1">
+                                <li>Open your presentation in Google Slides</li>
+                                <li>Click <strong>File → Share → Publish to web</strong></li>
+                                <li>Click <strong>Embed</strong> tab → click <strong>Publish</strong></li>
+                                <li>Copy the URL inside the <code class="bg-blue-100 px-1 rounded">src="..."</code> part
+                                    of the iframe code</li>
+                                <li>Paste it below ↓ (it'll auto-detect)</li>
+                            </ol>
+                        </div>
+
+                        <!-- Canva -->
+                        <div class="bg-purple-50 border border-purple-100 rounded-xl p-4 text-xs">
+                            <p class="font-bold text-purple-800 mb-2"><i class="fa-solid fa-pencil-ruler mr-1"></i>Canva
+                            </p>
+                            <ol class="list-decimal pl-4 text-purple-700 space-y-1">
+                                <li>Open your design in Canva</li>
+                                <li>Click <strong>Share → More → Embed</strong></li>
+                                <li>Copy the URL inside <code class="bg-purple-100 px-1 rounded">src="..."</code></li>
+                                <li>Paste it below ↓ (auto-detects Canva embed)</li>
+                            </ol>
+                            <p class="mt-2 text-purple-600 font-medium">⚠️ The normal "Present" link won't work. You
+                                must use the Embed link.</p>
+                        </div>
+
+                        <!-- PowerPoint Online -->
+                        <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 text-xs">
+                            <p class="font-bold text-orange-800 mb-2"><i
+                                    class="fa-solid fa-file-powerpoint mr-1"></i>PowerPoint Online (OneDrive)</p>
+                            <ol class="list-decimal pl-4 text-orange-700 space-y-1">
+                                <li>Open file in PowerPoint Online</li>
+                                <li>Click <strong>File → Share → Embed</strong></li>
+                                <li>Copy the embed URL from the iframe code</li>
+                            </ol>
+                        </div>
+
+                    </div>
+
+                    <!-- URL input -->
+                    <div class="space-y-3">
+                        <input type="text" id="materiUrl" oninput="previewMateriUrl()" class="input-field w-full"
+                            placeholder="Paste embed URL here...">
+                        <div id="materiUrlPreview"
+                            class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs">
+                            <p class="text-slate-500 font-bold mb-1">Will use this URL:</p>
+                            <p id="materiUrlConverted" class="font-mono text-emerald-700 break-all"></p>
+                        </div>
+                        <button onclick="presentMateri('url')"
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition active:scale-95 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-display"></i> Present Now (Full Screen)
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- EMERGENCY TAB -->
+            <section id="tab-emergency" class="page-trans hidden max-w-2xl mx-auto pt-10">
+                <div
+                    class="bg-white border text-center rounded-3xl p-10 shadow-2xl relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(255,0,0,0.15)] transition-shadow duration-500">
+                    <div
+                        class="absolute inset-0 border-4 border-red-50 rounded-3xl pointer-events-none group-hover:border-red-100 transition-colors">
+                    </div>
+                    <div
+                        class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-inner group-hover:bg-red-100 transition-colors">
+                        <i class="fa-solid fa-bell animate-wiggle"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">Emergency Override System</h2>
+                    <p class="text-slate-500 text-sm mb-10 px-8">Activating this will instantly interrupt all screens
+                        with an alarm.</p>
+                    <div class="flex items-center justify-center gap-6 mb-10">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Normal</span>
+                        <label class="relative inline-flex items-center cursor-pointer scale-150">
+                            <input type="checkbox" id="emergencyToggle" class="sr-only peer"
+                                onchange="saveConfig(false)">
+                            <div
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none ring-4 ring-transparent peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500">
+                            </div>
+                        </label>
+                        <span class="text-xs font-bold text-red-500 uppercase tracking-widest">Emergency</span>
+                    </div>
+                    <div class="input-group text-left">
+                        <label class="text-center w-full !text-red-400">Alert Message</label>
+                        <input type="text" id="emergencyMessage" onchange="saveConfig(false)"
+                            class="w-full text-center text-xl font-bold text-red-600 border-b-2 border-red-100 bg-transparent focus:border-red-500 outline-none pb-2 placeholder-red-200 transition-all"
+                            placeholder="TYPE MESSAGE HERE">
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="absolute bottom-8 right-8 z-50">
+            <button onclick="saveConfig()"
+                class="bg-slate-900 text-white pl-6 pr-8 py-4 rounded-full font-bold shadow-xl shadow-slate-900/30 hover:bg-emerald-600 hover:shadow-emerald-500/30 hover:scale-105 transition-all flex items-center gap-3 group">
+                <div
+                    class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <span>Save Changes</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- AUTH MODAL -->
+    <!-- AUTH MODAL -->
+    <div id="login-modal"
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0F172A] to-black">
+        <div
+            class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-sm text-center relative overflow-hidden border border-slate-800/10">
+            <!-- Decorative header -->
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 to-emerald-700"></div>
+
+            <div
+                class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-emerald-600 shadow-sm border border-emerald-100">
+                <i class="fa-solid fa-kaaba text-3xl"></i>
+            </div>
+
+            <h2 class="text-3xl font-bold text-slate-800 mb-2 font-serif">Mosque OS</h2>
+            <p class="text-slate-500 text-sm mb-8">Please sign in to access control panel</p>
+
+            <div class="space-y-4 text-left">
+                <div class="relative group">
+                    <div
+                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <input type="text" id="username"
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                        placeholder="Username">
+                </div>
+
+                <div class="relative group">
+                    <div
+                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <input type="password" id="password"
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                        placeholder="Password">
+                </div>
+            </div>
+
+            <button onclick="handleLogin()"
+                class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-3.5 rounded-lg font-bold mt-8 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
+                <span>Sign In</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+
+            <p id="login-error"
+                class="hidden text-red-600 text-xs mt-4 font-bold bg-red-50 border border-red-100 py-2.5 rounded flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-exclamation"></i> Invalid Credentials
+            </p>
+
+            <p class="mt-6 text-xs text-slate-300">Protected System &bull; Authorized Access Only</p>
+        </div>
+    </div>
+
+    <script>
+        // UUID Utils — must be defined BEFORE DEFAULT_CONFIG uses it
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // LOGIC
+        const DEFAULT_CONFIG = {
+            mosqueName: "Masjid Darul Aman",
+            mosqueAddress: "1 Jalan Eunos, Singapore",
+            runningText: "Welcome to our Mosque. Please straighten your rows.",
+            slides: [],
+            timers: {
+                iqomah: 300, // 5 mins
+                sholat: 600  // 10 mins
+            },
+            tarawihTime: "20:00", // Default 8 PM
+            theme: "dark",
+            flashMessage: {
+                active: false,
+                text: ""
+            },
+            token: generateUUID(),
+            adzanUrl: "",
+            location: { lat: 1.3521, lng: 103.8198, timezone: "Asia/Singapore" },
+            recruitment: { active: true, role: "Volunteer", contact: "Admin" }
+        };
+
+        let config = JSON.parse(localStorage.getItem('mosqueConfig')) || DEFAULT_CONFIG;
+
+        // Backward compatibility — ensure all keys exist
+        if (!config.token) config.token = generateUUID();
+        if (config.adzanUrl === undefined) config.adzanUrl = "";
+        if (config.location === undefined) config.location = { lat: 1.3521, lng: 103.8198, timezone: "Asia/Singapore" };
+        if (!config.recruitment) config.recruitment = { active: true, role: "Volunteer", contact: "Admin" };
+        if (!config.flashMessage) config.flashMessage = { active: false, text: "" };
+        if (config.tarawihTime === undefined) config.tarawihTime = "20:00";
+        if (config.theme === undefined) config.theme = "dark";
+
+
+        localStorage.setItem('mosqueConfig', JSON.stringify(config));
+
+        function regenerateToken() {
+            if (confirm("Regenerating the link will invalid the previous one. Continue?")) {
+                config.token = generateUUID();
+                saveConfig(false); // Save silently
+                updateLinkUI();
+                alert("New Secure Link Generated!");
+            }
+        }
+
+        function updateLinkUI() {
+            // Robustly determine base URL for display.html
+            // If running on root (e.g. localhost:5173/), location.href might not end in admin.html
+            // Best approach: Use origin + optional path + display.html
+
+            // However, we need to handle subdirectories if present.
+            // Let's assume display.html is in the same directory as the current page.
+
+            let path = window.location.pathname;
+            // Remove 'admin.html' or trailing slash if present, to find the directory
+            path = path.substring(0, path.lastIndexOf('/'));
+
+            // Construct absolute URL
+            const displayUrl = `${window.location.origin}${path}/display.html`;
+            const fullUrl = `${displayUrl}?token=${config.token}`;
+
+            // Make it a full link for better usability if needed, or just token
+            // User requested link generation so full URL is best
+            document.getElementById('display-url-box').innerText = fullUrl;
+            document.getElementById('live-view-btn').href = fullUrl;
+            document.getElementById('token-display').innerText = config.token;
+        }
+
+        function copyLink() {
+            const text = document.getElementById('display-url-box').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('button[title="Copy Link"]');
+                const icon = btn.querySelector('i');
+                icon.className = 'fa-solid fa-check text-emerald-500';
+                setTimeout(() => {
+                    icon.className = 'fa-solid fa-copy';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert("Failed to copy automatically.");
+            });
+        }
+
+        function checkAuth() {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('login-modal').classList.add('hidden');
+                initUI();
+            }
+        }
+        function handleLogin() {
+            if (document.getElementById('username').value === 'admin' && document.getElementById('password').value === '123456') {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                checkAuth();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+        function handleLogout() {
+            sessionStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
+
+        function switchTab(id) {
+            const tabs = ['general', 'content', 'slides', 'jumuah', 'emergency', 'materi']; // Added 'materi'
+            tabs.forEach(tab => {
+                const el = document.getElementById('nav-' + tab);
+                if (el) {
+                    el.className = "group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-slate-800 text-slate-400";
+                    const icon = el.querySelector('i');
+                    icon.className = icon.className.replace('text-red-400', '').replace('text-emerald-400', '');
+                }
+            });
+            const activeEl = document.getElementById('nav-' + id);
+            if (id === 'emergency') {
+                activeEl.className = "group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all bg-red-500 text-white shadow-lg shadow-red-500/20";
+            } else {
+                activeEl.className = "group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all bg-emerald-600 text-white shadow-lg shadow-emerald-500/20";
+            }
+            document.querySelectorAll('section').forEach(e => e.classList.add('hidden'));
+            document.getElementById('tab-' + id).classList.remove('hidden');
+            const titles = { general: 'Dashboard', content: 'Announcements', slides: 'Slide Gallery', materi: 'Materi Presentation', jumuah: 'Weekly Schedule', emergency: 'System Override' };
+            document.getElementById('header-title').textContent = titles[id];
+        }
+
+        function initUI() {
+            document.getElementById('mosqueName').value = config.mosqueName;
+            document.getElementById('mosqueAddress').value = config.mosqueAddress;
+            document.getElementById('runningText').value = config.runningText;
+
+            // Recruitment
+            if (config.recruitment) {
+                document.getElementById('recruitActive').checked = config.recruitment.active;
+                document.getElementById('recruitRole').value = config.recruitment.role || '';
+                document.getElementById('recruitContact').value = config.recruitment.contact || '';
+            }
+
+            document.getElementById('iqomahDuration').value = config.timers.iqomah;
+            document.getElementById('sholatDuration').value = config.timers.sholat;
+            document.getElementById('disp-iqomah').innerText = config.timers.iqomah + 's';
+            document.getElementById('disp-sholat').innerText = config.timers.sholat + 's';
+            document.getElementById('emergencyToggle').checked = config.flashMessage.active;
+            document.getElementById('emergencyMessage').value = config.flashMessage.text;
+            document.getElementById('adzanUrl').value = config.adzanUrl || "";
+
+            if (config.location) {
+                document.getElementById('locLat').value = config.location.lat;
+                document.getElementById('locLng').value = config.location.lng;
+                document.getElementById('locTz').value = config.location.timezone;
+            }
+
+            document.getElementById('displayTheme').value = config.theme || 'dark';
+            document.getElementById('tarawihTime').value = config.tarawihTime || '20:00';
+
+            updateLinkUI();
+            renderSlides();
+            renderScheduleTable();
+        }
+
+        // --- SCHEDULE LOGIC ---
+        let fridaySchedule = JSON.parse(localStorage.getItem('mosqueFridaySchedule')) || [];
+
+        function renderScheduleTable() {
+            const tbody = document.getElementById('scheduleList');
+            tbody.innerHTML = '';
+
+            // Sort date asc
+            fridaySchedule.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (fridaySchedule.length === 0) {
+                document.getElementById('empty-schedule').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('empty-schedule').classList.add('hidden');
+
+            fridaySchedule.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-4 font-mono font-bold text-emerald-600">${item.date}</td>
+                    <td class="p-4 font-medium">${item.khatib}</td>
+                    <td class="p-4">${item.imam}</td>
+                    <td class="p-4">${item.muadzin}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="deleteSchedule(${index})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function addSchedule() {
+            const date = document.getElementById('jumDate').value;
+            const khatib = document.getElementById('jumKhotib').value;
+            const imam = document.getElementById('jumImam').value;
+            const muadzin = document.getElementById('jumMuadzin').value;
+
+            if (!date || !khatib) {
+                alert("Please fill Date and Khotib as minimum.");
+                return;
+            }
+
+            fridaySchedule.push({ date, khatib, imam, muadzin });
+            saveSchedule();
+
+            // Reset inputs
+            document.getElementById('jumDate').value = '';
+            document.getElementById('jumKhotib').value = '';
+            document.getElementById('jumImam').value = '';
+            document.getElementById('jumMuadzin').value = '';
+        }
+
+        function deleteSchedule(index) {
+            if (confirm('Remove this schedule?')) {
+                fridaySchedule.splice(index, 1);
+                saveSchedule();
+            }
+        }
+
+        function saveSchedule() {
+            localStorage.setItem('mosqueFridaySchedule', JSON.stringify(fridaySchedule));
+            renderScheduleTable();
+        }
+
+
+
+
+        // ----------------------
+
+        function testAudio() {
+            const url = document.getElementById('adzanUrl').value;
+            if (!url) { alert("Please enter a URL first. playing beep for now."); return; }
+            const audio = new Audio(url);
+            audio.play().catch(e => alert("Error playing audio: " + e));
+        }
+
+        function testState(type) {
+            const duration = 15; // 15 seconds test
+            const state = {
+                status: type,
+                targetEnd: Date.now() + (duration * 1000),
+                prayer: 'TEST'
+            };
+            localStorage.setItem('mosqueState', JSON.stringify(state));
+            alert(`Triggered ${type} mode for 15 seconds on Display.`);
+        }
+
+        function resetState() {
+            localStorage.removeItem('mosqueState');
+            alert("Display state FORCE RESET to Normal Mode.");
+        }
+
+        function saveConfig(showToast = true) {
+            // Helper: safely read a field value, returning fallback if element missing
+            const val = (id, fallback = '') => document.getElementById(id)?.value ?? fallback;
+            const chk = (id, fallback = false) => document.getElementById(id)?.checked ?? fallback;
+            const inum = (id, fallback = 0) => parseInt(val(id, String(fallback))) || fallback;
+            const fnum = (id, fallback = 0) => parseFloat(val(id, String(fallback))) || fallback;
+
+            config.mosqueName = val('mosqueName', config.mosqueName);
+            config.mosqueAddress = val('mosqueAddress', config.mosqueAddress);
+            config.runningText = val('runningText', config.runningText);
+
+            config.recruitment = {
+                active: chk('recruitActive', config.recruitment?.active ?? true),
+                role: val('recruitRole', config.recruitment?.role ?? ''),
+                contact: val('recruitContact', config.recruitment?.contact ?? '')
+            };
+
+            config.timers = {
+                iqomah: inum('iqomahDuration', config.timers?.iqomah ?? 300),
+                sholat: inum('sholatDuration', config.timers?.sholat ?? 600)
+            };
+            config.tarawihTime = val('tarawihTime', config.tarawihTime || '20:00');
+            config.theme = val('displayTheme', config.theme || 'dark');
+
+            config.flashMessage = {
+                active: chk('emergencyToggle', config.flashMessage?.active ?? false),
+                text: val('emergencyMessage', config.flashMessage?.text ?? '')
+            };
+
+            config.adzanUrl = val('adzanUrl', config.adzanUrl ?? '');
+
+            config.location = {
+                lat: fnum('locLat', config.location?.lat ?? 1.3521),
+                lng: fnum('locLng', config.location?.lng ?? 103.8198),
+                timezone: val('locTz', config.location?.timezone ?? 'Asia/Singapore')
+            };
+
+            console.log('[Admin] saveConfig — emergency:', config.flashMessage.active);
+
+            try {
+                localStorage.setItem('mosqueConfig', JSON.stringify(config));
+                if (showToast) {
+                    const btn = document.querySelector('button[onclick="saveConfig()"]');
+                    if (btn) {
+                        const prev = btn.innerHTML;
+                        btn.innerHTML = '✓ Saved!';
+                        btn.classList.replace('bg-slate-900', 'bg-emerald-500');
+                        setTimeout(() => {
+                            btn.innerHTML = prev;
+                            btn.classList.replace('bg-emerald-500', 'bg-slate-900');
+                        }, 1500);
+                    }
+                }
+            } catch (e) {
+                alert('Storage Full! Delete some slides/images first.');
+            }
+        }
+
+        function handleImageUpload(input) {
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
+
+            let processedCount = 0;
+
+            files.forEach(file => {
+                // Limit: 5MB for Video/PDF, 1MB for Image
+                const isVideo = file.type.startsWith('video/');
+                const isPdf = file.type === 'application/pdf';
+                const limit = (isVideo || isPdf) ? 5 * 1024 * 1024 : 1024 * 1024;
+
+                if (file.size > limit) {
+                    alert(`${file.name}: File too large! Max 5MB for Video/PDF, 1MB for Image.`);
+                    processedCount++;
+                    if (processedCount === files.length) renderSlides();
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = e => {
+                    let type = 'image';
+                    if (isVideo) type = 'video';
+                    if (isPdf) type = 'pdf';
+
+                    config.slides.push({
+                        type: type,
+                        data: e.target.result,
+                        name: file.name // Store name for reference
+                    });
+                    processedCount++;
+                    if (processedCount === files.length) {
+                        saveConfig(false); // Auto save to persist immediate additions
+                        renderSlides();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // params reset so user can select same files again if needed
+            input.value = '';
+        }
+
+        function renderSlides() {
+            const list = document.getElementById('slideList');
+            list.innerHTML = '';
+            if (config.slides.length === 0) {
+                list.innerHTML = `<div class="col-span-full py-16 text-center bg-white border-2 border-dashed border-slate-200 rounded-2xl"><i class="fa-regular fa-image text-4xl text-slate-300 mb-2"></i><p class="text-sm text-slate-400">No media yet</p></div>`;
+                return;
+            }
+            config.slides.forEach((item, idx) => {
+                // Compatibility check: if item is string (old format), convert
+                let src = item;
+                let type = 'image';
+                if (typeof item === 'object') {
+                    src = item.data;
+                    type = item.type;
+                } else {
+                    // Auto-detect old data
+                    if (src.startsWith('data:video')) type = 'video';
+                }
+
+                const el = document.createElement('div');
+                el.className = "group relative aspect-video bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all";
+
+                let contentHTML = `<img src="${src}" class="w-full h-full object-cover">`;
+                if (type === 'video') {
+                    contentHTML = `<video src="${src}" class="w-full h-full object-cover" muted></video>
+                                   <div class="absolute inset-0 flex items-center justify-center pointer-events-none"><i class="fa-solid fa-circle-play text-white/80 text-4xl drop-shadow-lg"></i></div>`;
+                } else if (type === 'pdf') {
+                    contentHTML = `
+                        <div class="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-500 p-4">
+                             <i class="fa-solid fa-file-pdf text-5xl text-red-500 mb-2 drop-shadow-sm"></i>
+                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">PDF Document</span>
+                             <span class="text-xs px-2 text-center truncate w-full font-medium text-slate-600 mt-1">${item.name || 'Untitled'}</span>
+                        </div>
+                    `;
+                }
+
+                el.innerHTML = `
+                    ${contentHTML}
+                    <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3">
+                        <button onclick="if(confirm('Delete?')) { config.slides.splice(${idx},1); renderSlides(); }" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg transform hover:scale-110 transition"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        // ============================================================
+        // MATERI PRESENTATION FUNCTIONS
+        // ============================================================
+
+        let materiPdfData = null; // temporarily holds the PDF base64
+
+        function handleMateriPdf(input) {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File too large! Max 5MB for PDF.');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = e => {
+                materiPdfData = e.target.result;
+                document.getElementById('materi-pdf-name').textContent = file.name;
+                document.getElementById('materi-pdf-preview').classList.remove('hidden');
+                document.getElementById('materi-pdf-drop').classList.add('opacity-50', 'pointer-events-none');
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        }
+
+        /**
+         * Converts a regular Google Slides / Canva URL into an embeddable one.
+         * - Google Slides: extracts the doc ID and builds /embed URL
+         * - Canva: ensures it contains ?embed or /embed
+         * - Other URLs: returned as-is
+         */
+        function convertToEmbedUrl(raw) {
+            const url = raw.trim();
+
+            // --- Google Slides ---
+            // Patterns: /presentation/d/ID/edit  or  /presentation/d/ID/pub  or  /presentation/d/ID/embed
+            const gsMatch = url.match(/docs\.google\.com\/presentation\/d\/([^/]+)/);
+            if (gsMatch) {
+                const id = gsMatch[1];
+                return `https://docs.google.com/presentation/d/${id}/embed?start=true&loop=true&delayms=5000&rm=minimal`;
+            }
+
+            // --- Canva ---
+            // Patterns: canva.com/design/ID/.../view  OR  canva.com/design/ID/.../present
+            // Embed version: canva.com/design/ID/.../view?embed
+            if (url.includes('canva.com')) {
+                // Already embed? return as-is
+                if (url.includes('?embed') || url.includes('/embed')) return url;
+                // Remove /present and replace with /view?embed
+                return url.replace('/present', '/view').replace(/\/view(\?.*)?$/, '/view?embed');
+            }
+
+            // --- OneDrive / PowerPoint Online ---
+            // Already an embed src URL, return as-is
+            if (url.includes('onedrive.live.com') || url.includes('sharepoint.com')) {
+                return url;
+            }
+
+            // --- Default: return raw (could be any iframe-safe URL) ---
+            return url;
+        }
+
+        function previewMateriUrl() {
+            const raw = document.getElementById('materiUrl')?.value?.trim();
+            const preview = document.getElementById('materiUrlPreview');
+            const converted = document.getElementById('materiUrlConverted');
+            if (!raw || !preview || !converted) return;
+            if (raw.length < 10) { preview.classList.add('hidden'); return; }
+            const result = convertToEmbedUrl(raw);
+            converted.textContent = result;
+            preview.classList.remove('hidden');
+        }
+
+        function presentMateri(type) {
+            let materi = null;
+
+            if (type === 'pdf') {
+                if (!materiPdfData) { alert('Please upload a PDF first.'); return; }
+                materi = { active: true, type: 'pdf', data: materiPdfData };
+            } else {
+                const raw = document.getElementById('materiUrl')?.value?.trim();
+                if (!raw) { alert('Please paste a presentation URL first.'); return; }
+                const embedUrl = convertToEmbedUrl(raw);
+                materi = { active: true, type: 'url', url: embedUrl };
+                console.log('[Admin] Presenting URL:', embedUrl);
+            }
+
+            try {
+                localStorage.setItem('mosqueMateri', JSON.stringify(materi));
+                updateMateriAdminUI(true);
+                console.log('[Admin] Materi LIVE:', type);
+            } catch (e) {
+                alert('Storage full! Cannot save large PDF. Try a URL link instead.');
+            }
+        }
+
+        function stopMateri() {
+            localStorage.setItem('mosqueMateri', JSON.stringify({ active: false }));
+            updateMateriAdminUI(false);
+            // Reset PDF state
+            materiPdfData = null;
+            const preview = document.getElementById('materi-pdf-preview');
+            const drop = document.getElementById('materi-pdf-drop');
+            if (preview) preview.classList.add('hidden');
+            if (drop) { drop.classList.remove('opacity-50', 'pointer-events-none'); }
+            console.log('[Admin] Materi stopped');
+        }
+
+        function updateMateriAdminUI(isLive) {
+            document.getElementById('materi-status-banner')?.classList.toggle('hidden', !isLive);
+            document.getElementById('materi-live-badge')?.classList.toggle('hidden', !isLive);
+        }
+
+        // Sync LIVE badge on admin page when returning to Materi tab
+        setInterval(() => {
+            try {
+                const m = JSON.parse(localStorage.getItem('mosqueMateri') || '{}');
+                updateMateriAdminUI(m.active === true);
+            } catch (e) { }
+        }, 1000);
+
+        checkAuth();
+
+    </script>
+</body>
+
+</html>

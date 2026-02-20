@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosque Display</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Lateef&family=Lalezar&family=Orbitron:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Amiri', serif;
+            /* Changed to Islamic friendly serif */
+            cursor: none;
+        }
+
+        .font-clock {
+            font-family: 'Lalezar', cursive;
+        }
+
+        /* New Utilities */
+        .font-arabic {
+            font-family: 'Lateef', serif;
+        }
+
+        .fade-enter {
+            opacity: 0;
+        }
+
+        .fade-enter-active {
+            opacity: 1;
+            transition: opacity 0.5s ease-in;
+        }
+
+        @keyframes scroll-text {
+            from {
+                transform: translateX(100vw);
+            }
+
+            to {
+                transform: translateX(-100%);
+            }
+        }
+
+        .animate-scroll {
+            animation: scroll-text 25s linear infinite;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-slate-800 h-screen w-screen overflow-hidden relative">
+
+    <!-- START OVERLAY -->
+    <div id="start-overlay" class="fixed inset-0 z-50 bg-white flex items-center justify-center cursor-auto">
+        <div class="text-center">
+            <button onclick="startApp()"
+                class="bg-emerald-600 text-white px-10 py-4 rounded-xl font-bold text-2xl shadow-lg hover:bg-emerald-700 transition">
+                <i class="fa-solid fa-play mr-3"></i> START DISPLAY
+            </button>
+            <p id="token-status" class="mt-4 text-slate-400 font-mono text-sm">Verifying...</p>
+        </div>
+    </div>
+
+    <!-- ERROR OVERLAY -->
+    <div id="auth-error"
+        class="hidden fixed inset-0 z-[60] bg-slate-900 flex flex-col items-center justify-center text-center cursor-auto">
+        <i class="fa-solid fa-lock text-6xl text-red-500 mb-6"></i>
+        <h1 class="text-3xl font-bold text-white mb-2">Access Denied</h1>
+        <p class="text-slate-400 mb-4">The provided token is invalid or missing.</p>
+        <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Expected URL Format</p>
+            <code class="text-emerald-400 text-sm">/display.html?token=YOUR_TOKEN</code>
+        </div>
+    </div>
+
+    <!-- EMERGENCY OVERLAY -->
+    <div id="emergency-overlay"
+        class="hidden fixed inset-0 z-[100] bg-red-600 flex flex-col items-center justify-center text-white text-center animate-pulse">
+        <i class="fa-solid fa-triangle-exclamation text-9xl mb-8 opacity-80"></i>
+        <h1 class="text-6xl font-bold mb-6">EMERGENCY NOTICE</h1>
+        <p id="emergency-msg" class="text-4xl font-mono px-20">...</p>
+    </div>
+
+    <!-- MATERI PRESENTATION OVERLAY (Full Screen) -->
+    <div id="materi-overlay" class="hidden fixed inset-0 z-[90] bg-black flex flex-col">
+        <!-- Iframe fills entire screen -->
+        <iframe id="materi-iframe" class="w-full flex-1 border-0" allowfullscreen src="about:blank">
+        </iframe>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="app" class="h-full flex flex-col hidden">
+
+        <!-- TOP SECTION (90%) -->
+        <div class="h-[90vh] grid grid-cols-12 bg-black">
+
+            <!-- LEFT SIDEBAR (25%) - DARK MODE -->
+            <aside class="col-span-3 bg-slate-950 border-r border-slate-800 flex flex-col h-full overflow-hidden">
+
+                <!-- Clock -->
+                <div class="shrink-0 p-6 text-center bg-slate-900 border-b border-slate-800">
+                    <div id="clock-time"
+                        class="text-6xl font-clock font-bold text-white tracking-tight text-shadow-glow">--:--</div>
+                    <div id="clock-date" class="text-slate-400 font-medium mt-2 text-sm uppercase tracking-wide">...
+                    </div>
+                    <div id="clock-hijri" class="text-emerald-500 font-bold text-xl mt-2 uppercase tracking-widest">...
+                    </div>
+                </div>
+
+                <!-- Weather Widget -->
+                <!-- Weather Widget (Horizontal Compact) -->
+                <!-- Weather Widget (Horizontal Compact) -->
+                <div id="weather-widget"
+                    class="shrink-0 px-4 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between overflow-hidden gap-4 transition-opacity duration-300">
+                    <!-- Current -->
+                    <div class="flex items-center gap-3 shrink-0">
+                        <i id="weather-icon" class="fa-solid fa-cloud-sun text-2xl text-amber-500"></i>
+                        <div>
+                            <p
+                                class="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-0.5">
+                                Singapore</p>
+                            <p id="weather-temp" class="font-bold text-xl text-white leading-none">--°</p>
+                        </div>
+                    </div>
+                    <!-- 5-Day Forecast -->
+                    <div id="weather-forecast" class="flex gap-1 shrink-0 opacity-90">
+                        <!-- Forecast Items -->
+                    </div>
+                </div>
+
+                <!-- On Duty Widget (Hidden by default, toggles with Weather) -->
+                <div id="onduty-widget"
+                    class="hidden shrink-0 px-4 py-3 bg-emerald-950/20 border-b border-emerald-900/50 flex flex-col justify-center overflow-hidden transition-opacity duration-300 gap-1 h-[72px]">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-none"><i
+                                class="fa-solid fa-user-shield mr-2"></i>Today's Staff</p>
+                        <p class="text-[9px] text-emerald-600 font-mono" id="onduty-date">--</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4">
+                        <div class="flex flex-col gap-0.5">
+                            <p class="text-[8px] text-emerald-700 uppercase leading-none">Imam</p>
+                            <p class="text-sm font-bold text-emerald-100 truncate leading-none" id="onduty-imam">...</p>
+                        </div>
+                        <div class="flex flex-col gap-0.5">
+                            <p class="text-[8px] text-emerald-700 uppercase leading-none">Bilal</p>
+                            <p class="text-sm font-bold text-emerald-100 truncate leading-none" id="onduty-bilal">...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recruitment Widget (Hidden by default, toggles in rotation) -->
+                <div id="recruit-widget"
+                    class="hidden shrink-0 px-4 py-3 bg-blue-950/20 border-b border-blue-900/50 flex flex-col justify-center overflow-hidden transition-opacity duration-300 gap-1 h-[72px]">
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest leading-none"><i
+                                class="fa-solid fa-hand-holding-heart mr-2"></i>Volunteer</p>
+                        <span
+                            class="text-[8px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded animate-pulse">OPEN</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex flex-col gap-0.5">
+                            <p class="text-[9px] text-blue-500 uppercase leading-none">Looking For</p>
+                            <p class="text-sm font-bold text-blue-100 truncate leading-none w-24" id="recruit-role">...
+                            </p>
+                        </div>
+                        <div class="h-9 w-9 bg-white p-0.5 rounded-sm shrink-0 flex items-center justify-center">
+                            <i class="fa-solid fa-qrcode text-xl text-slate-800"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prayer Times -->
+                <div class="flex-1 p-4 flex flex-col justify-center overflow-hidden min-h-0 relative bg-slate-950">
+                    <h3 class="shrink-0 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 text-center">
+                        Prayer Times
+                    </h3>
+                    <div id="prayer-list"
+                        class="flex-1 flex flex-col justify-center bg-slate-900 rounded-xl overflow-hidden my-2 border border-slate-800 divide-y divide-slate-800/50">
+                        <!-- Injected JS -->
+                    </div>
+                </div>
+
+                <!-- Mosque Info -->
+                <div class="shrink-0 p-6 text-center border-t border-slate-800 bg-slate-900 relative z-10">
+                    <h2 id="disp-name" class="font-bold text-lg text-white leading-tight">...</h2>
+                    <p id="disp-addr" class="text-sm text-slate-500 mt-1 mb-2">...</p>
+
+                    <div id="jumuah-info"
+                        class="hidden pt-3 border-t border-slate-800 grid grid-cols-2 gap-2 text-left">
+                        <div>
+                            <p class="text-[10px] uppercase font-bold text-emerald-500">Khotib</p>
+                            <p id="disp-khotib" class="text-xs font-semibold truncate text-slate-300">...</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase font-bold text-emerald-500">Muadzin</p>
+                            <p id="disp-muadzin" class="text-xs font-semibold truncate text-slate-300">...</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN SLIDER (75%) -->
+            <main class="col-span-9 relative bg-black overflow-hidden h-full">
+                <div id="main-slide-container" class="absolute inset-0 w-full h-full transition-opacity duration-700">
+                    <!-- Dynamic Content -->
+                </div>
+                <div id="empty-slide-msg"
+                    class="hidden absolute inset-0 flex items-center justify-center text-slate-400">
+                    No slides uploaded via Admin Panel
+                </div>
+
+                <!-- IQOMAH OVERLAY -->
+                <div id="iqomah-screen"
+                    class="hidden absolute inset-0 bg-emerald-900/95 flex flex-col items-center justify-center text-white z-20">
+                    <p class="text-2xl font-bold uppercase tracking-[0.5em] text-emerald-200 mb-8">Iqomah In</p>
+                    <div id="iqomah-countdown" class="text-[10rem] font-clock font-bold leading-none">00:00</div>
+                    <p id="iqomah-next" class="text-3xl mt-8 font-serif italic text-emerald-100 opacity-80">Next: Asr
+                        Prayer</p>
+                </div>
+
+            </main>
+        </div>
+        <!-- RUNNING TEXT (10%) -->
+        <footer
+            class="h-[10vh] bg-emerald-900 border-t border-emerald-800 text-emerald-100 relative overflow-hidden shrink-0 z-50">
+            <div id="marquee"
+                class="absolute top-0 h-full flex items-center whitespace-nowrap text-2xl font-medium will-change-transform animate-scroll">
+                Loading message...
+            </div>
+        </footer>
+    </div>
+
+    <!-- GLOBAL SHOLAT OVERLAY (Moved out of main to cover sidebar/footer) -->
+    <div id="sholat-screen"
+        class="hidden fixed inset-0 bg-black flex flex-col items-center justify-center z-[100] text-center cursor-none">
+        <!-- Minimalist Sleep Mode content -->
+        <i class="fa-solid fa-mobile-screen-button text-emerald-900/50 text-6xl mb-8 animate-pulse"></i>
+        <h1 class="text-emerald-800 text-4xl font-bold tracking-[0.5em] mb-4 opacity-50">SHOLAT IN PROGRESS</h1>
+        <p class="text-slate-800 text-lg tracking-widest uppercase font-bold mb-12">Please Silence Phones</p>
+
+        <!-- Very dim saf reminder -->
+        <!-- Very dim saf reminder with Multi-Language Subtitles -->
+        <div
+            class="grid grid-cols-2 gap-x-16 gap-y-8 text-emerald-800 uppercase tracking-widest text-xl font-bold opacity-70 mt-8">
+            <!-- Malay -->
+            <div class="text-right border-r-2 border-emerald-900/30 pr-8">
+                <p class="mb-2">Sila Senyapkan Telefon</p>
+                <p>Luruskan Saf Anda</p>
+            </div>
+            <!-- Chinese -->
+            <div class="text-left pl-8">
+                <p class="mb-2">请把手机静音</p>
+                <p>请排直队伍</p>
+            </div>
+            <!-- Tamil -->
+            <div class="text-right border-r-2 border-emerald-900/30 pr-8">
+                <p class="mb-2 font-sans text-lg">தொலைபேசியை அமைதியாக்குங்கள்</p>
+                <p class="font-sans text-lg">வரிசைகளை சீரமைக்கவும்</p>
+            </div>
+            <!-- Bengali -->
+            <div class="text-left pl-8">
+                <p class="mb-2 font-sans text-lg">দয়া করে ফোন সাইলেন্ট করুন</p>
+                <p class="font-sans text-lg">প্লিজ কাতার সোজা করুন</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG
+        const DEFAULT_CONFIG = {
+            mosqueName: "Setup Required",
+            mosqueAddress: "Use Admin Panel to Configure",
+            runningText: "Welcome to the Mosque. Please configure via Admin Panel.",
+            slides: [],
+            timers: { iqomah: 300, sholat: 600 },
+            flashMessage: { active: false, text: "" },
+            token: "",
+            jumuahInfo: { khotib: "", muadzin: "" },
+            location: { lat: 1.3521, lng: 103.8198, timezone: "Asia/Singapore" },
+            recruitment: { active: true, role: "Volunteer", contact: "Admin" }
+        };
+
+        let config = DEFAULT_CONFIG;
+        let audioCtx;
+        let prayerData = null;
+        let islamicEvents = []; // New global for events
+        let fridayScheduleToday = null; // Today's Friday schedule if exists
+        let slideIndex = 0;
+        let validToken = false;
+        let isSliding = false;
+
+        // State is now derived from storage + time calculations
+        let stateObj = { status: 'NORMAL', targetEnd: 0, prayer: '' };
+
+        // INIT
+        function startApp() {
+            if (!validToken) return;
+
+            document.getElementById('start-overlay').remove();
+            document.getElementById('app').classList.remove('hidden');
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            try { document.documentElement.requestFullscreen(); } catch (e) { }
+
+            // Initial Load
+            // Initial Load
+            checkFridaySchedule(); // Check if today is Friday with schedule (Priority)
+            loadConfig();
+            fetchPrayers();
+            fetchWeather();
+            fetchIslamicEvents(); // Fetch events
+            restoreState();
+
+            // Loops
+            setInterval(tick, 1000);
+            cycleSlides(); // Start the chain
+            setInterval(loadConfig, 2000);
+            setInterval(checkFridaySchedule, 3600000); // Check every hour
+            window.addEventListener('storage', loadConfig);
+
+
+        }
+
+        function restoreState() {
+            const stored = JSON.parse(localStorage.getItem('mosqueState'));
+            if (stored && stored.targetEnd > Date.now()) {
+                stateObj = stored;
+            } else {
+                stateObj = { status: 'NORMAL', targetEnd: 0, prayer: '' };
+            }
+        }
+
+        // Validate Token On Load
+        // Validate Token On Load
+        (function validate() {
+            // Bypass validation for Smart Display Usage
+            validToken = true;
+            document.getElementById('token-status').innerText = "Display Ready.";
+            document.getElementById('token-status').classList.replace('text-slate-400', 'text-emerald-500');
+
+            // Allow auto-start if possible or just show overlay
+        })();
+
+        // ========================================================
+        // EMERGENCY POLLER — runs immediately on page load (every 500ms)
+        // Must be OUTSIDE startApp() so it works before START is clicked
+        // ========================================================
+        setInterval(() => {
+            try {
+                const raw = localStorage.getItem('mosqueConfig');
+                if (!raw) return;
+                const c = JSON.parse(raw);
+                const overlay = document.getElementById('emergency-overlay');
+                if (!overlay) return;
+
+                if (c.flashMessage && c.flashMessage.active === true) {
+                    // Always update message text in case it changed
+                    document.getElementById('emergency-msg').textContent = c.flashMessage.text || 'EMERGENCY!';
+                    overlay.classList.remove('hidden');
+                    overlay.style.cssText = 'display:flex !important';
+                    console.log('[Emergency] ACTIVE — overlay shown');
+                } else {
+                    overlay.classList.add('hidden');
+                    overlay.style.cssText = 'display:none !important';
+                }
+            } catch (e) {
+                console.error('[Emergency] Poller error:', e);
+            }
+        }, 500);
+
+        // MATERI POLLER — runs every 500ms from page load, outside startApp()
+        // Uses a SEPARATE localStorage key: 'mosqueMateri'
+        (function startMateriPoller() {
+            let lastMateriState = null;
+
+            setInterval(() => {
+                try {
+                    const raw = localStorage.getItem('mosqueMateri');
+                    if (raw === lastMateriState) return; // no change, skip
+                    lastMateriState = raw;
+
+                    const m = raw ? JSON.parse(raw) : null;
+                    const overlay = document.getElementById('materi-overlay');
+                    const iframe = document.getElementById('materi-iframe');
+                    if (!overlay || !iframe) return;
+
+                    if (m && m.active === true) {
+                        let src = 'about:blank';
+                        if (m.type === 'pdf' && m.data) {
+                            src = m.data; // base64 data URL
+                        } else if (m.type === 'url' && m.url) {
+                            src = m.url;
+                        }
+
+                        if (iframe.src !== src) iframe.src = src;
+                        overlay.classList.remove('hidden');
+                        overlay.style.cssText = 'display:flex !important';
+                        console.log('[Display] Materi LIVE:', m.type);
+                    } else {
+                        overlay.classList.add('hidden');
+                        overlay.style.cssText = 'display:none !important';
+                        if (iframe.src !== 'about:blank') iframe.src = 'about:blank';
+                    }
+                } catch (e) {
+                    console.error('[Display] Materi poller error:', e);
+                }
+            }, 500);
+        })();
+
+
+        function loadConfig() {
+            const raw = localStorage.getItem('mosqueConfig');
+            if (raw) {
+                config = JSON.parse(raw);
+                if (!config.location) config.location = { lat: 1.3521, lng: 103.8198, timezone: "Asia/Singapore" };
+                if (!config.recruitment) config.recruitment = { active: true, role: "Volunteer", contact: "Admin" };
+                updateUI();
+            }
+            restoreState(); // Sync state (allows Admin to trigger modes)
+        }
+
+        function updateUI() {
+            // Text
+            document.getElementById('disp-name').textContent = config.mosqueName;
+            document.getElementById('disp-addr').textContent = config.mosqueAddress;
+            const marquee = document.getElementById('marquee');
+            if (marquee.textContent.trim() !== config.runningText) {
+                marquee.textContent = config.runningText;
+            }
+
+            // Emergency
+            if (config.flashMessage && config.flashMessage.active) {
+                const ovl = document.getElementById('emergency-overlay');
+                ovl.classList.remove('hidden');
+                document.getElementById('emergency-msg').textContent = config.flashMessage.text;
+                try { beep(800, 'sawtooth', 0.5); } catch (e) { }
+            } else {
+                document.getElementById('emergency-overlay').classList.add('hidden');
+            }
+
+            // Slides check
+            // Slides check
+            const hasFriday = fridayScheduleToday !== null ? 1 : 0;
+            // Recruitment moved to sidebar
+            const hasEvents = islamicEvents.length > 0 ? 1 : 0;
+            const totalSlides = config.slides.length + hasFriday + hasEvents;
+
+            if (totalSlides === 0) {
+                document.getElementById('main-slide-container').classList.add('hidden');
+                document.getElementById('empty-slide-msg').classList.remove('hidden');
+            } else {
+                document.getElementById('main-slide-container').classList.remove('hidden');
+                document.getElementById('empty-slide-msg').classList.add('hidden');
+
+                // Restart logic if stalled
+                if (!isSliding) {
+                    cycleSlides();
+                }
+            }
+
+            // Jumuah Info Check
+            if (fridayScheduleToday) {
+                document.getElementById('jumuah-info').classList.remove('hidden');
+
+                // Show date if not today
+                const todayStr = new Date().toISOString().split('T')[0];
+                let label = "Khotib";
+                if (fridayScheduleToday.date !== todayStr) {
+                    const d = new Date(fridayScheduleToday.date);
+                    label = `Khotib (${d.getDate()}/${d.getMonth() + 1})`;
+                }
+
+                // Update label (hacky DOM update or just recreate structure? Simple text update is safer)
+                // Let's just prepend date to Khotib name for simplicity in this constrained view or update the label element if we can select it efficiently.
+                // Actually, let's just make the sidebar section title dynamic? NO, structure is fixed.
+                // Let's update the "Khotib" label text directly.
+                const kLabel = document.querySelector('#jumuah-info div:nth-child(1) p:first-child');
+                if (kLabel) kLabel.textContent = label;
+
+                document.getElementById('disp-khotib').textContent = fridayScheduleToday.khatib || "-";
+                document.getElementById('disp-muadzin').textContent = fridayScheduleToday.muadzin || "-";
+            } else {
+                document.getElementById('jumuah-info').classList.add('hidden');
+            }
+        }
+
+        // SLIDER
+        async function cycleSlides() {
+            // Check if there are any slides OR if there are events/friday to show
+            const hasFriday = fridayScheduleToday !== null ? 1 : 0;
+            const hasRecruit = (config.recruitment && config.recruitment.active) ? 1 : 0;
+            const hasEvents = islamicEvents.length > 0 ? 1 : 0;
+            const totalSlides = config.slides.length + hasFriday + hasRecruit + hasEvents;
+
+            if (stateObj.status !== 'NORMAL' || totalSlides === 0) {
+                isSliding = false;
+                return;
+            }
+            isSliding = true;
+
+            // Get current item
+            const item = getSlideContent(slideIndex);
+
+            // Safety check
+            if (!item) {
+                slideIndex = 0;
+                setTimeout(cycleSlides, 100);
+                return;
+            }
+
+            const container = document.getElementById('main-slide-container');
+
+            // Render
+            await renderSlideContent(item, container);
+
+            // Determine duration
+            let duration = 10000; // Default 10s
+            if (item.type === 'video') {
+                const video = container.querySelector('video');
+                if (video) {
+                    // Critical: Ensure robust playback handling
+                    // 1. Set explicit ended handler
+                    video.onended = nextSlide;
+                    video.onerror = () => setTimeout(nextSlide, 1000); // Fail fast
+
+                    // 2. Attempt play
+                    video.play()
+                        .then(() => {
+                            // Playback started successfully, wait for onended
+                        })
+                        .catch(e => {
+                            console.warn('Autoplay blocked', e);
+                            setTimeout(nextSlide, duration);
+                        });
+                    return; // Return early, letting event/timeout handle valid transition
+                }
+            } else if (item.type === 'events' || item.type === 'friday' || item.type === 'recruitment') {
+                duration = 15000;
+            }
+
+            // Schedule next
+            setTimeout(nextSlide, duration);
+        }
+
+        function nextSlide() {
+            const hasFriday = fridayScheduleToday !== null ? 1 : 0;
+            const hasRecruit = (config.recruitment && config.recruitment.active) ? 1 : 0;
+            const hasEvents = islamicEvents.length > 0 ? 1 : 0;
+            const total = config.slides.length + hasFriday + hasRecruit + hasEvents;
+
+            slideIndex = (slideIndex + 1) % total;
+            cycleSlides();
+        }
+
+        function getSlideContent(idx) {
+            // Priority: Friday -> Slides -> Events
+            let currentOffset = 0;
+
+            // 1. Friday
+            if (fridayScheduleToday !== null) {
+                if (idx === currentOffset) return { type: 'friday', data: fridayScheduleToday };
+                currentOffset++;
+            }
+
+            // 1.5 Recruitment
+            if (config.recruitment && config.recruitment.active) {
+                if (idx === currentOffset) return { type: 'recruitment', data: config.recruitment };
+                currentOffset++;
+            }
+
+            // 2. Regular Slides
+            if (idx < currentOffset + config.slides.length) {
+                return config.slides[idx - currentOffset];
+            }
+            currentOffset += config.slides.length;
+
+            // 3. Events
+            if (islamicEvents.length > 0) {
+                return { type: 'events', data: islamicEvents };
+            }
+
+            return null;
+        }
+
+        async function renderSlideContent(item, container) {
+            container.innerHTML = '';
+
+            // Fade out
+            container.style.opacity = 0;
+
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    if (item.type === 'friday') {
+                        renderFridayWidget(item.data, container);
+                    } else if (item.type === 'events') {
+                        renderEventsWidget(item.data, container);
+                    } else if (item.type === 'recruitment') {
+                        renderRecruitmentWidget(item.data, container);
+                    } else if (item.type === 'video') {
+                        const video = document.createElement('video');
+                        video.src = item.data;
+                        video.className = "w-full h-full object-cover";
+                        video.muted = true;
+                        container.appendChild(video);
+                    } else if (item.type === 'pdf') {
+                        const iframe = document.createElement('iframe');
+                        iframe.src = item.data + "#view=FitH&toolbar=0&navpanes=0&scrollbar=0"; // optimize PDF view
+                        iframe.className = "w-full h-full border-0 bg-white";
+                        container.appendChild(iframe);
+                    } else {
+                        // Image
+                        const wrapper = document.createElement('div');
+                        wrapper.className = "w-full h-full";
+                        const img = document.createElement('img');
+                        img.src = item.data || item;
+                        img.className = "w-full h-full object-cover";
+                        wrapper.appendChild(img);
+                        container.appendChild(wrapper);
+                    }
+                    // Fade in
+                    container.style.opacity = 1;
+                    resolve();
+                }, 500);
+            });
+        }
+
+
+
+        function renderEventsWidget(events, container) {
+            const date = new Date();
+            const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            const wrapper = document.createElement('div');
+            wrapper.className = "w-full h-full bg-slate-100 flex items-center justify-center p-12";
+
+            let itemsHTML = '';
+            events.forEach(e => {
+                itemsHTML += `
+                <div class="relative overflow-hidden bg-white/60 backdrop-blur-md border border-white/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group">
+                    <div class="absolute inset-y-0 left-0 w-1.5 bg-emerald-500 rounded-l-2xl"></div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-2xl font-bold text-slate-800">${e.date}</p>
+                            <p class="text-sm font-medium text-emerald-600 uppercase tracking-wider">${e.hijri}</p>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-700 text-right group-hover:text-emerald-700 transition-colors">${e.title}</h3>
+                    </div>
+                </div>
+                `;
+            });
+
+            wrapper.innerHTML = `
+                <div class="w-full max-w-5xl">
+                    <header class="mb-10 text-center">
+                        <div class="inline-flex items-center gap-3 bg-emerald-100 text-emerald-700 px-6 py-2 rounded-full mb-4">
+                            <i class="fa-solid fa-moon"></i>
+                            <span class="font-bold text-sm tracking-widest uppercase">Islamic Calendar</span>
+                        </div>
+                        <h2 class="text-5xl font-bold text-slate-900">Upcoming Events</h2>
+                        <p class="text-xl text-slate-500 mt-2">${monthName}</p>
+                    </header>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${itemsHTML}
+                    </div>
+                </div>
+            `;
+            container.appendChild(wrapper);
+        }
+
+
+        function renderFridayWidget(schedule, container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "w-full h-full bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center p-12";
+
+            const isToday = new Date().toISOString().split('T')[0] === schedule.date;
+            const titleText = isToday ? "Today's Jumu'ah Service" : "Upcoming Jumu'ah Service";
+
+            const d = new Date(schedule.date);
+            const hijriStr = new Intl.DateTimeFormat('en-GB-u-ca-islamic', {
+                dateStyle: 'long'
+            }).format(d);
+
+            wrapper.innerHTML = `
+                <div class="w-full max-w-5xl text-white">
+                    <header class="mb-12 text-center">
+                        <div class="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6">
+                            <i class="fa-solid fa-mosque text-2xl"></i>
+                            <span class="font-bold text-lg tracking-widest uppercase">Jumu'ah Service</span>
+                        </div>
+                        <h2 class="text-6xl font-bold mb-3">${titleText}</h2>
+                        <div class="flex flex-col items-center gap-1">
+                            <p class="text-2xl text-emerald-100">${new Date(schedule.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                            <p class="text-lg text-emerald-200/80 font-serif italic">${hijriStr}</p>
+                        </div>
+                    </header>
+                    
+                    <div class="grid grid-cols-3 gap-8">
+                        <div class="bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all">
+                            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa-solid fa-book-quran text-4xl"></i>
+                            </div>
+                            <p class="text-sm uppercase tracking-widest text-emerald-100 mb-2">Khotib</p>
+                            <h3 class="text-3xl font-bold">${schedule.khatib}</h3>
+                        </div>
+                        
+                        <div class="bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all">
+                            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa-solid fa-hands-praying text-4xl"></i>
+                            </div>
+                            <p class="text-sm uppercase tracking-widest text-emerald-100 mb-2">Imam</p>
+                            <h3 class="text-3xl font-bold">${schedule.imam || '-'}</h3>
+                        </div>
+                        
+                         <div class="bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-3xl p-8 text-center hover:bg-white/20 transition-all">
+                            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa-solid fa-volume-high text-4xl"></i>
+                            </div>
+                            <p class="text-sm uppercase tracking-widest text-emerald-100 mb-2">Muadzin</p>
+                            <h3 class="text-3xl font-bold">${schedule.muadzin || '-'}</h3>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(wrapper);
+        }
+
+        function renderRecruitmentWidget(data, container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "w-full h-full flex flex-col items-center justify-center p-12 bg-slate-900 relative overflow-hidden";
+
+            // Dummy QR for now, can be config driven if needed
+            const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://example.com/register&color=2563eb";
+
+            wrapper.innerHTML = `
+                <div class="absolute inset-0 opacity-20">
+                    <div class="absolute -right-20 -top-20 w-96 h-96 bg-emerald-500 rounded-full blur-[100px]"></div>
+                    <div class="absolute -left-20 -bottom-20 w-96 h-96 bg-blue-500 rounded-full blur-[100px]"></div>
+                </div>
+
+                <div class="relative z-10 text-center max-w-5xl flex flex-col items-center">
+                    <div class="inline-flex items-center gap-3 bg-emerald-500/20 text-emerald-400 px-6 py-2 rounded-full mb-8 border border-emerald-500/20 animate-pulse">
+                         <i class="fa-solid fa-hand-holding-heart"></i>
+                         <span class="font-bold tracking-widest uppercase text-sm">Open Recruitment</span>
+                    </div>
+                    
+                    <h2 class="text-7xl font-bold text-white mb-6 leading-tight">
+                        Join Our Team of <br/>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Volunteers</span>
+                    </h2>
+
+                    <div class="flex items-center gap-8 mt-8 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl p-10">
+                        <div class="text-left">
+                            <p class="text-slate-400 uppercase tracking-widest text-sm mb-4">We are looking for</p>
+                            <h3 class="text-4xl font-bold text-white mb-4">${data.role || "General Volunteers"}</h3>
+                            <p class="text-slate-300 text-lg">Contact: <span class="text-3xl font-mono text-emerald-300 font-bold ml-2">${data.contact || "Admin"}</span></p>
+                        </div>
+                        
+                        <div class="h-32 w-px bg-white/20 mx-4"></div>
+                        
+                        <div class="bg-white p-2 rounded-xl">
+                             <img src="${qrUrl}" class="w-40 h-40" alt="Scan to Join">
+                        </div>
+                    </div>
+                    <p class="text-slate-500 mt-6 text-sm uppercase tracking-widest">Scan QR Code to Register Interest</p>
+                </div>
+             `;
+            container.appendChild(wrapper);
+        }
+
+        async function fetchIslamicEvents() {
+            try {
+                const d = new Date();
+                const lat = config.location ? config.location.lat : 1.3521;
+                const lng = config.location ? config.location.lng : 103.8198;
+                // AlAdhan API
+                const res = await fetch(`https://api.aladhan.com/v1/gregorianCalendar/${d.getFullYear()}/${d.getMonth() + 1}?latitude=${lat}&longitude=${lng}&method=11`);
+                const data = await res.json();
+
+                islamicEvents = [];
+                if (data.status === "OK") {
+                    data.data.forEach(day => {
+                        if (day.holidays && day.holidays.length > 0) {
+                            // Deduplicate holidays if needed or take first
+                            const title = day.holidays[0];
+                            const date = day.date.gregorian.day + ' ' + day.date.gregorian.month.en;
+                            const hijri = day.date.hijri.day + ' ' + day.date.hijri.month.en;
+
+                            islamicEvents.push({ date, hijri, title });
+                        }
+                    });
+                }
+                console.log("Fetched Events:", islamicEvents);
+            } catch (e) {
+                console.error("Failed to fetch events", e);
+            }
+        }
+
+        function checkFridaySchedule() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+            const schedules = JSON.parse(localStorage.getItem('mosqueFridaySchedule')) || [];
+
+            // Find first schedule that is today OR future
+            // Sort first to be sure
+            schedules.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const match = schedules.find(s => s.date >= todayStr);
+
+            if (match) {
+                fridayScheduleToday = match;
+            } else {
+                fridayScheduleToday = null;
+            }
+        }
+
+        // PRAYER TIMES
+        async function fetchPrayers() {
+            try {
+                const d = new Date();
+                const year = d.getFullYear();
+                const month = d.getMonth() + 1;
+                const lat = config.location ? config.location.lat : 1.3521;
+                const lng = config.location ? config.location.lng : 103.8198;
+
+                const res = await fetch(`https://api.aladhan.com/v1/timings/${d.getDate()}-${month}-${year}?latitude=${lat}&longitude=${lng}&method=11`);
+                const json = await res.json();
+                prayerData = json.data;
+
+                const h = prayerData.date.hijri;
+                document.getElementById('clock-hijri').textContent = `${h.day} ${h.month.en} ${h.year} H`;
+
+            } catch (e) { console.error("API Error", e); }
+        }
+
+        // MAIN TICK
+        function tick() {
+            const now = new Date();
+
+            // Clock - Configurable Timezone
+            const tz = (config.location && config.location.timezone) || "Asia/Singapore";
+            const sgTime = new Date(now.toLocaleString("en-US", { timeZone: tz }));
+
+            document.getElementById('clock-time').textContent = sgTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            document.getElementById('clock-date').textContent = sgTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+            // Prayer Logic
+            if (prayerData) {
+                renderPrayerList(sgTime); // Pass SG time to comparator
+                if (stateObj.status === 'NORMAL') {
+                    checkTriggers(sgTime);    // Pass SG time to triggers
+                }
+
+                // Toggle Sidebar Widget (Weather vs On Duty vs Recruitment)
+                // Cycle: Weather(10s) -> OnDuty(5s) -> Recruitment(5s)
+                const hasRecruit = (config.recruitment && config.recruitment.active);
+                const totalCycle = hasRecruit ? 20 : 15;
+                const phase = Math.floor(Date.now() / 1000) % totalCycle;
+
+                const weatherEl = document.getElementById('weather-widget');
+                const onDutyEl = document.getElementById('onduty-widget');
+                const recruitEl = document.getElementById('recruit-widget');
+
+                if (weatherEl && onDutyEl && recruitEl) {
+                    if (phase < 10) {
+                        // Weather
+                        if (weatherEl.classList.contains('hidden')) {
+                            weatherEl.classList.remove('hidden');
+                            onDutyEl.classList.add('hidden');
+                            recruitEl.classList.add('hidden');
+                        }
+                    } else if (phase < 15) {
+                        // On Duty
+                        if (onDutyEl.classList.contains('hidden')) {
+                            onDutyEl.classList.remove('hidden');
+                            weatherEl.classList.add('hidden');
+                            recruitEl.classList.add('hidden');
+                            renderOnDuty();
+                        }
+                    } else {
+                        // Recruitment
+                        if (recruitEl.classList.contains('hidden')) {
+                            recruitEl.classList.remove('hidden');
+                            weatherEl.classList.add('hidden');
+                            onDutyEl.classList.add('hidden');
+                            // Render Recruitment Info
+                            const roleEl = document.getElementById('recruit-role');
+                            if (roleEl) roleEl.innerText = config.recruitment.role || "General";
+                        }
+                    }
+                }
+            }
+
+            // State Machine
+            const remaining = Math.max(0, Math.ceil((stateObj.targetEnd - Date.now()) / 1000));
+
+            if (stateObj.status === 'IQOMAH') {
+                if (remaining > 0) {
+                    // Update UI
+                    document.getElementById('iqomah-screen').classList.remove('hidden');
+                    document.getElementById('sholat-screen').classList.add('hidden');
+                    document.getElementById('iqomah-next').textContent = `Next: ${stateObj.prayer} Prayer`;
+
+                    const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+                    const s = (remaining % 60).toString().padStart(2, '0');
+                    document.getElementById('iqomah-countdown').textContent = `${m}:${s}`;
+                } else {
+                    enterSholat();
+                }
+            } else if (stateObj.status === 'SHOLAT') {
+                if (remaining > 0) {
+                    document.getElementById('iqomah-screen').classList.add('hidden');
+                    document.getElementById('sholat-screen').classList.remove('hidden');
+                } else {
+                    enterNormal();
+                }
+            } else {
+                document.getElementById('iqomah-screen').classList.add('hidden');
+                document.getElementById('sholat-screen').classList.add('hidden');
+            }
+        }
+
+        function checkTriggers(now) {
+            if (stateObj.status !== 'NORMAL') return;
+
+            const prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            const timings = prayerData.timings;
+
+            prayers.forEach(p => {
+                const timeStr = timings[p];
+                const [h, m] = timeStr.split(':');
+                const pDate = new Date();
+                pDate.setHours(h, m, 0, 0);
+
+                if (Math.abs(now - pDate) < 1500) {
+                    enterIqomah(p);
+                }
+            });
+        }
+
+        function enterIqomah(prayer) {
+            const duration = config.timers.iqomah || 300;
+            stateObj = {
+                status: 'IQOMAH',
+                targetEnd: Date.now() + (duration * 1000),
+                prayer: prayer
+            };
+            localStorage.setItem('mosqueState', JSON.stringify(stateObj));
+
+            document.getElementById('iqomah-screen').classList.remove('hidden');
+            document.getElementById('iqomah-next').textContent = `Next: ${prayer} Prayer`;
+
+            playAdzan();
+        }
+
+        function playAdzan() {
+            if (config.adzanUrl) {
+                const audio = new Audio(config.adzanUrl);
+                audio.play().catch(e => {
+                    console.warn("Adzan playback failed", e);
+                    // Fallback to beep if playback fails (policy)
+                    beep(600, 'sine', 1);
+                });
+            } else {
+                beep(600, 'sine', 1);
+            }
+        }
+
+        function enterSholat() {
+            const duration = config.timers.sholat || 600;
+            stateObj = {
+                status: 'SHOLAT',
+                targetEnd: Date.now() + (duration * 1000),
+                prayer: stateObj.prayer
+            };
+            localStorage.setItem('mosqueState', JSON.stringify(stateObj));
+
+            document.getElementById('iqomah-screen').classList.add('hidden');
+            document.getElementById('sholat-screen').classList.remove('hidden');
+
+            // Beep 5 times (Longer: 1.5s beep every 2s)
+            let count = 0;
+            const interval = setInterval(() => {
+                beep(600, 'sine', 1.5);
+                count++;
+                if (count >= 5) clearInterval(interval);
+            }, 2000);
+        }
+
+        function enterNormal() {
+            stateObj = { status: 'NORMAL', targetEnd: 0, prayer: '' };
+            localStorage.removeItem('mosqueState');
+            document.getElementById('sholat-screen').classList.add('hidden');
+        }
+
+
+
+        function renderPrayerList(now) {
+            const list = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            const container = document.getElementById('prayer-list');
+            container.innerHTML = '';
+
+            const isRamadhan = prayerData.date.hijri.month.number === 9;
+
+            list.forEach(p => {
+                const time = prayerData.timings[p];
+                const item = document.createElement('div');
+
+                // Dark Mode Item Style
+                item.className = `flex-1 flex justify-between items-center px-6 transition-colors duration-500 hover:bg-slate-800/50`;
+
+                item.innerHTML = `
+                    <span class="font-medium text-[clamp(14px,1.8vh,20px)] text-slate-400 group-hover:text-emerald-400 transition">${p}</span>
+                    <span class="font-bold text-[clamp(16px,2.2vh,28px)] text-slate-200 tracking-wider">${time}</span>
+                `;
+                container.appendChild(item);
+
+                // Add Tarawih after Isha if Ramadhan
+                if (isRamadhan && p === 'Isha') {
+                    // ... (Tarawih logic)
+                    // Simplified for auto-fit, ignoring extra visual overhead for now or adding it carefully
+                    // For safety in auto-fit, keeping simple flow
+                }
+            });
+        }
+
+        function renderOnDuty() {
+            // Display Today's Data
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const dateEl = document.getElementById('onduty-date');
+
+            // Format: "Mon, 03 Feb"
+            if (dateEl) dateEl.innerText = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+            // Hijri Date from global
+            if (typeof prayerData !== 'undefined' && prayerData.date && prayerData.date.hijri) {
+                const h = prayerData.date.hijri;
+                const hijriEl = document.getElementById('onduty-hijri');
+                // e.g. "15 RAMADHAN 1447"
+                if (hijriEl) hijriEl.innerText = `${h.day} ${h.month.en} ${h.year}`;
+            }
+
+            // Fetch Daily Roster
+            const roster = JSON.parse(localStorage.getItem('mosqueDailyRoster')) || [];
+            const todayDuty = roster.find(r => r.date === todayStr);
+
+            // Fallback
+            const staff = todayDuty || { imam: '-', bilal: '-' };
+
+            const imamEl = document.getElementById('onduty-imam');
+            const bilalEl = document.getElementById('onduty-bilal');
+
+            if (imamEl) imamEl.innerText = staff.imam || '-';
+            if (bilalEl) bilalEl.innerText = staff.bilal || '-';
+        }
+
+        // WEATHER
+        async function fetchWeather() {
+            try {
+                // Open-Meteo API
+                const lat = config.location ? config.location.lat : 1.3521;
+                const lng = config.location ? config.location.lng : 103.8198;
+                const tz = (config.location && config.location.timezone) ? encodeURIComponent(config.location.timezone) : "Asia%2FSingapore";
+
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=${tz}`);
+                const data = await res.json();
+                renderWeather(data);
+            } catch (e) { console.error("Weather API Error", e); }
+        }
+
+        function renderWeather(data) {
+            // Current
+            const current = data.current_weather;
+            document.getElementById('weather-temp').innerText = `${Math.round(current.temperature)}°C`;
+            document.getElementById('weather-icon').className = `fa-solid ${getWeatherIcon(current.weathercode)} text-2xl text-amber-500`;
+
+            // Daily Forecast (Next 5 Days)
+            const daily = data.daily;
+            const container = document.getElementById('weather-forecast');
+            container.innerHTML = '';
+
+            for (let i = 0; i <= 4; i++) { // Today + 4 Days
+                if (!daily.time[i]) break;
+                const dayCode = daily.weathercode[i];
+                const maxTemp = Math.round(daily.temperature_2m_max[i]);
+                const date = new Date(daily.time[i]);
+                const dayName = i === 0 ? "TDY" : date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1); // T, W, T...
+
+                const el = document.createElement('div');
+                const isActive = i === 0;
+
+                el.className = `flex flex-col items-center justify-center p-1 rounded ${isActive ? 'bg-emerald-900/40 ring-1 ring-emerald-500/20' : ''}`;
+                el.innerHTML = `
+                    <p class="text-[8px] ${isActive ? 'text-emerald-400 font-bold' : 'text-slate-500'} uppercase leading-none mb-0.5">${dayName}</p>
+                    <i class="fa-solid ${getWeatherIcon(dayCode)} text-[10px] ${isActive ? 'text-emerald-300' : 'text-slate-600'} mb-0.5"></i>
+                    <p class="text-[9px] font-bold ${isActive ? 'text-emerald-200' : 'text-slate-600'} leading-none">${maxTemp}°</p>
+                `;
+                container.appendChild(el);
+            }
+        }
+
+        function getWeatherIcon(code) {
+            // WMO Weather Codes
+            if (code <= 3) return 'fa-sun'; // Clear/Cloudy
+            if (code <= 48) return 'fa-smog'; // Fog
+            if (code <= 67) return 'fa-cloud-rain'; // Rain
+            if (code <= 77) return 'fa-snowflake'; // Snow
+            if (code <= 82) return 'fa-cloud-showers-heavy'; // Showers
+            if (code <= 99) return 'fa-bolt'; // Thunderstorm
+            return 'fa-cloud';
+        }
+
+        function beep(freq, type, dur) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + dur);
+            setTimeout(() => osc.stop(), dur * 1000);
+        }
+
+        // Init
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes marquee { 0 % { transform: translateX(0); } 100 % { transform: translateX(-100 %); } }`;
+        document.head.appendChild(style);
+
+    </script>
+</body>
+
+</html>
